@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
-        id="androidwifi" version="0.0.1">
+        id="androidwifi" 
+        version="0.0.1">
 
   <name>Android Wifi</name>
+  <repo>https://github.com/jeroenvanderlaarse/androidwifi.git</repo>
 
   <js-module name="AndroidWifi" src="www/AndroidWifi.js">
     <clobbers target="window.AndroidWifi" />
@@ -11,6 +13,7 @@
 
   <!-- android -->
   <platform name="android">
+
    <config-file target="AndroidManifest.xml" parent="/*">
       <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
       <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -20,17 +23,14 @@
       <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     </config-file>
 
-    
-
     <config-file target="res/xml/config.xml" parent="/*">
       <feature name="AndroidWifi">
         <param name="android-package" value="androidwifi.AndroidWifi" />
+        <param name="onload" value="true" />
       </feature>
     </config-file>
 
-   <source-file src="src/android/AndroidWifi.java"
-                 target-dir="src/android/androidwifi">
-    </source-file>
+   <source-file src="src/android/AndroidWifi.java" target-dir="src/android/androidwifi" />
   </platform>
 
 </plugin>
