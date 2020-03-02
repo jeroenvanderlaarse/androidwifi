@@ -1,0 +1,25 @@
+{
+  "name": "androidwifi",
+  "version": "0.0.1",
+  "description": "",
+  "cordova": {
+    "id": "androidwifi",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeroenvanderlaarse/androidwifi.git"
+  },
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android"
+  ],
+  "author": "Jeroen",
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/jeroenvanderlaarse/androidwifi/issues"
+  },
+  "homepage": "https://github.com/jeroenvanderlaarse/androidwifi#readme"
+}
