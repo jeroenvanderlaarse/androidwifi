@@ -665,6 +665,7 @@ public class AndroidWifi extends CordovaPlugin {
 
                         if (currentSSID.equals(ssid)) {
                             AndroidWifi.this.getConnectedSSID(callbackContext);
+                            callbackContext.success("connected to " + currentSSID);
                         } else {
                             callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
                         }
