@@ -566,30 +566,23 @@ public class AndroidWifi extends CordovaPlugin {
      * @return true if SSID found, false if not.
      */
     private boolean getConnectedSSID(CallbackContext callbackContext) {
-        return getWifiServiceInfo(callbackContext, false);
+        return getWifiServiceInfo(callbackContext);
     }
 
-    /**
-     * This method retrieves the WifiInformation for the (SSID or BSSID) currently connected network.
-     *
-     * @param callbackContext A Cordova callback context
-     * @param basicIdentifier A flag to get BSSID if true or SSID if false.
-     * @return true if SSID found, false if not.
-     */
-    private boolean getWifiServiceInfo(CallbackContext callbackContext, boolean basicIdentifier) {
+    private String getWifiServiceInfo(CallbackContext callbackContext) {
 
         WifiInfo info = wifiManager.getConnectionInfo();
 
         if (info == null) {
             callbackContext.error("UNABLE_TO_READ_WIFI_INFO");
-            return false;
+            return null;
         }
 
         // Only return SSID when actually connected to a network
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
             callbackContext.error("CONNECTION_NOT_COMPLETED");
-            return false;
+            return null;
         }
 
         String serviceInfo;
@@ -597,7 +590,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         if (serviceInfo == null || serviceInfo.isEmpty() || serviceInfo == "0x") {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
-            return false;
+            return null;
         }
 
         // http://developer.android.com/reference/android/net/wifi/WifiInfo.html#getSSID()
@@ -605,8 +598,7 @@ public class AndroidWifi extends CordovaPlugin {
             serviceInfo = serviceInfo.substring(1, serviceInfo.length() - 1);
         }
 
-        callbackContext.success(serviceInfo);
-        return true;
+        return serviceInfo;
     }
 
 
