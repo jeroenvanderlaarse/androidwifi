@@ -821,4 +821,31 @@ public class AndroidWifi extends CordovaPlugin {
 
         return maxPriority;
     }
+
+    static public String getSecurityType(WifiConfiguration wifiConfig) {
+
+        if (wifiConfig.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.NONE)) {
+            // If we never set group ciphers, wpa_supplicant puts all of them.
+            // For open, we don't set group ciphers.
+            // For WEP, we specifically only set WEP40 and WEP104, so CCMP
+            // and TKIP should not be there.
+            if (!wifiConfig.allowedGroupCiphers.get(WifiConfiguration.GroupCipher.CCMP)
+                    && (wifiConfig.allowedGroupCiphers.get(WifiConfiguration.GroupCipher.WEP40)
+                    || wifiConfig.allowedGroupCiphers.get(WifiConfiguration.GroupCipher.WEP104))) {
+                return "WEP";
+            } else {
+                return "NONE";
+            }
+        } else if (wifiConfig.allowedProtocols.get(WifiConfiguration.Protocol.RSN)) {
+            return "WPA2";
+        } else if (wifiConfig.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.WPA_EAP)) {
+            return "WPA";//"WPA_EAP";
+        } else if (wifiConfig.allowedKeyManagement.get(WifiConfiguration.KeyMgmt.IEEE8021X)) {
+            return "WPA";//"IEEE8021X";
+        } else if (wifiConfig.allowedProtocols.get(WifiConfiguration.Protocol.WPA)) {
+            return "WPA";
+        } else {
+            return "NONE";
+        }
+    }
 }
