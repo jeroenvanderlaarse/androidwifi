@@ -13,7 +13,6 @@
 
   <!-- android -->
   <platform name="android">
-
    <config-file target="AndroidManifest.xml" parent="/*">
       <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
       <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -24,7 +23,9 @@
     </config-file>
 
     <config-file target="res/xml/config.xml" parent="/*">
-      <feature name="AndroidWifi">
+      <preference name="android-minSdkVersion" value="29" />
+    <preference name="android-targetSdkVersion" value="29" />
+    <feature name="AndroidWifi">
         <param name="android-package" value="androidwifi.AndroidWifi" />
         <param name="onload" value="true" />
       </feature>
