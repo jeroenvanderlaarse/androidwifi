@@ -459,6 +459,7 @@ public class AndroidWifi extends CordovaPlugin {
         }
 
         String ssidToDisconnect = "";
+        String authType = data.getString(2);
 
         // TODO: Verify type of data here!
         try {
@@ -469,13 +470,13 @@ public class AndroidWifi extends CordovaPlugin {
             return false;
         }
 
-        int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect);
+        int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect, authType);
 
         if (networkIdToDisconnect > 0) {
 
             if (wifiManager.disableNetwork(networkIdToDisconnect)) {
 
-                maybeResetBindALL();
+                //maybeResetBindALL();
 
                 // We also remove the configuration from the device (use "disable" to keep config)
                 if (wifiManager.removeNetwork(networkIdToDisconnect)) {
