@@ -529,7 +529,7 @@ public class AndroidWifi extends CordovaPlugin {
      */
     private boolean validateData(JSONArray data) {
         Log.d(TAG, "[AndroidWifi]: validateData()" + data.toString());
-        Log.d(TAG, "[AndroidWifi]: size=" + data.size());
+        //Log.d(TAG, "[AndroidWifi]: size=" + data.size());
 
         try {
             if (data == null || data.get(0) == null) {
