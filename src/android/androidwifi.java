@@ -148,7 +148,10 @@ public class AndroidWifi extends CordovaPlugin {
 
         // Actions that DO require WiFi to be enabled
         if (action.equals(ADD_NETWORK)) {
-            this.add(callbackContext, data);
+            String ssid = "\"" + data.getString("ssid") + "\"";
+            String password = "\"" + data.getString("password") + "\"";
+            String authType = data.getString("authType");
+            this.add(callbackContext, ssid, password, authType);
         } else if (action.equals(CONNECT_NETWORK)) {
             this.connect(callbackContext, data);
         } else if (action.equals(DISCONNECT_NETWORK)) {
@@ -219,11 +222,8 @@ public class AndroidWifi extends CordovaPlugin {
      * @params callbackContext     A Cordova callback context.
      * @params data                JSON Array with [0] == SSID, [1] == password
      */
-    private boolean add(CallbackContext callbackContext, JSONArray data) {
-        String ssid = "\"" + data.getString("ssid") + "\"";
-        String password = "\"" + data.getString("password") + "\"";
-        String authType = data.getString("authType");
-
+    private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
+       
         // Initialize the WifiConfiguration object
         WifiConfiguration wifi = new WifiConfiguration();
         Log.i(TAG, ssid+password+authType);
@@ -370,7 +370,7 @@ public class AndroidWifi extends CordovaPlugin {
             String ssid = "\"" + data.getString("ssid") + "\"";
             String password = "\"" + data.getString("password") + "\"";
             String authType = data.getString("authType");
-            this.add(call, ssid, password, authType);
+            this.add(callbackContext, ssid, password, authType);
 
             int networkIdToConnect = ssidToNetworkId(ssid, authType);
 
