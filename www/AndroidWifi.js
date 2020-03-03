@@ -26,6 +26,8 @@ var AndroidWifi = {
      * @returns {Promise<any>}
      */
     connect: function (ssid, password, authType) {
+        console.log("connect(" + ssid + ',' + password + ',' + authType + ')');
+
         return new Promise(function (resolve, reject) {
 
             if (!ssid) {
