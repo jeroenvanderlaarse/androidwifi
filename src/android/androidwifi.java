@@ -397,11 +397,11 @@ public class AndroidWifi extends CordovaPlugin {
 
 
     public void connect(CallbackContext callbackContext, JSONArray data) {
-        Log.d(TAG, "AndroidWifi: connect entered.");
+        Log.d(TAG, "[AndroidWifi]: connect entered.");
 
         if (!validateData(data)) {
             callbackContext.error("CONNECT_INVALID_DATA");
-            Log.d(TAG, "AndroidWifi: connect invalid data.");
+            Log.d(TAG, "[AndroidWifi]: connect invalid data.");
             return;
         }
 
@@ -418,6 +418,8 @@ public class AndroidWifi extends CordovaPlugin {
             Log.d(TAG, e.getMessage());
             return;
         }
+
+        Log.d(TAG, "[AndroidWifi]: API_VERSION=" + API_VERSION);
 
         if (API_VERSION < 29) {
           
@@ -437,6 +439,7 @@ public class AndroidWifi extends CordovaPlugin {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
         } else {
+            Log.d(TAG, "[AndroidWifi]: CALL getWifiServiceInfo");
 
             String connectedSSID = this.getWifiServiceInfo(callbackContext);
 
@@ -597,6 +600,8 @@ public class AndroidWifi extends CordovaPlugin {
 
     private String getWifiServiceInfo(CallbackContext callbackContext) {
 
+        Log.d(TAG, "[AndroidWifi]: in getWifiServiceInfo");
+
         WifiInfo info = wifiManager.getConnectionInfo();
 
         if (info == null) {
@@ -611,8 +616,12 @@ public class AndroidWifi extends CordovaPlugin {
             return null;
         }
 
+        Log.d(TAG, "[AndroidWifi]: getWifiServiceInfo() => info.getSSID()");
+
         String serviceInfo;
         serviceInfo = info.getSSID();
+
+        Log.d(TAG, "[AndroidWifi]: getWifiServiceInfo()return serviceInfo=" + serviceInfo);
 
         if (serviceInfo == null || serviceInfo.isEmpty() || serviceInfo == "0x") {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
@@ -623,6 +632,8 @@ public class AndroidWifi extends CordovaPlugin {
         if (serviceInfo.startsWith("\"") && serviceInfo.endsWith("\"")) {
             serviceInfo = serviceInfo.substring(1, serviceInfo.length() - 1);
         }
+
+        
 
         return serviceInfo;
     }
