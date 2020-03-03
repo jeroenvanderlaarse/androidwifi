@@ -614,7 +614,7 @@ public class AndroidWifi extends CordovaPlugin {
         if (API_VERSION >= 29) {
             if (useWifi) {
                 final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
-                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+                    
                 if (networkRequest == null) {
                     networkRequest = new NetworkRequest.Builder()
                         .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
