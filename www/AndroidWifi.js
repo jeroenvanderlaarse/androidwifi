@@ -57,7 +57,7 @@ var AndroidWifi = {
      * @param {string|int} [ssid=all]
      * @returns {Promise<any>}
      */
-    disconnect: function (ssid, password, authType) {
+    disconnectNetwork: function (ssid, password, authType) {
         return new Promise(function (resolve, reject) {
 
             if (!ssid) {
