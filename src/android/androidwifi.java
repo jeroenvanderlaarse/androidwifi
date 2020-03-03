@@ -67,12 +67,13 @@ public class AndroidWifi extends CordovaPlugin {
     private static final String SET_BIND_ALL = "setBindAll";
     private static final String GET_WIFI_IP_INFO = "getWifiIPInfo";
 
+    private ConnectivityManager.NetworkCallback networkCallback;
+
     private WifiManager wifiManager;
     private CallbackContext callbackContext;
     private JSONArray passedData;
 
     private ConnectivityManager connectivityManager;
-    private ConnectivityManager.NetworkCallback networkCallback;
 
     private final BroadcastReceiver networkChangedReceiver = new NetworkChangedReceiver();
     private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
@@ -612,7 +613,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         if (API_VERSION >= 29) {
             if (useWifi) {
-                final ConnectivityManager manager = (ConnectivityManager) this.context
+                final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
                     .getSystemService(Context.CONNECTIVITY_SERVICE);
                 if (networkRequest == null) {
                     networkRequest = new NetworkRequest.Builder()
@@ -641,14 +642,14 @@ public class AndroidWifi extends CordovaPlugin {
                 });
 
             } else {
-                ConnectivityManager manager = (ConnectivityManager) this.context
-                    .getSystemService(Context.CONNECTIVITY_SERVICE);
+                // ConnectivityManager manager = (ConnectivityManager) this.connectivityManager
+                //     .getSystemService(Context.CONNECTIVITY_SERVICE);
 
-                if (this.networkCallback != null) {
-                    manager.unregisterNetworkCallback(this.networkCallback);
-                    this.networkCallback = null;
-                }
-                manager.bindProcessToNetwork(null);
+                // if (this.networkCallback != null) {
+                //     manager.unregisterNetworkCallback(this.networkCallback);
+                //     this.networkCallback = null;
+                // }
+                // manager.bindProcessToNetwork(null);
             }
         }
 
