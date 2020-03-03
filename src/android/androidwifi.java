@@ -90,7 +90,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         this.callbackContext = callbackContext;
         this.passedData = data;
-
+/*
         // Actions that do not require WiFi to be enabled
         if (action.equals(IS_WIFI_ENABLED)) {
             this.isWifiEnabled(callbackContext);
@@ -137,16 +137,24 @@ public class AndroidWifi extends CordovaPlugin {
             callbackContext.success(result);
             return true;
         }
+        
 
         boolean wifiIsEnabled = verifyWifiEnabled();
         if (!wifiIsEnabled) {
             callbackContext.error("WIFI_NOT_ENABLED");
             return true; // Even though enable wifi failed, we still return true and handle error in callback
         }
+        */
 
         // Actions that DO require WiFi to be enabled
         if (action.equals(ADD_NETWORK)) {
             this.add(callbackContext, data);
+        } else if (action.equals(CONNECT_NETWORK)) {
+            this.connect(callbackContext, data);
+        } else if (action.equals(DISCONNECT_NETWORK)) {
+            this.disconnectNetwork(callbackContext, data);
+        } 
+            /*
         } else if (action.equals(IS_CONNECTED_TO_INTERNET)) {
             this.canConnectToInternet(callbackContext, true);
         } else if (action.equals(CAN_CONNECT_TO_INTERNET)) {
@@ -169,11 +177,10 @@ public class AndroidWifi extends CordovaPlugin {
             this.scan(callbackContext, data);
         } else if (action.equals(REMOVE_NETWORK)) {
             this.remove(callbackContext, data);
-        } else if (action.equals(CONNECT_NETWORK)) {
-            this.connect(callbackContext, data);
-        } else if (action.equals(DISCONNECT_NETWORK)) {
-            this.disconnectNetwork(callbackContext, data);
-        } else if (action.equals(LIST_NETWORKS)) {
+        } else */
+        
+        /*
+    else if (action.equals(LIST_NETWORKS)) {
             this.listNetworks(callbackContext);
         } else if (action.equals(START_SCAN)) {
             this.startScan(callbackContext);
@@ -199,6 +206,7 @@ public class AndroidWifi extends CordovaPlugin {
             // @see https://cordova.apache.org/docs/en/latest/guide/platforms/android/plugin.html
             return false;
         }
+        */
 
         return true;
     }
@@ -212,35 +220,25 @@ public class AndroidWifi extends CordovaPlugin {
      * @params data                JSON Array with [0] == SSID, [1] == password
      */
     private boolean add(CallbackContext callbackContext, JSONArray data) {
-
-        Log.d(TAG, "WifiWizard2: add entered.");
+        String ssid = "\"" + data.getString("ssid") + "\"";
+        String password = "\"" + data.getString("password") + "\"";
+        String authType = data.getString("authType");
 
         // Initialize the WifiConfiguration object
         WifiConfiguration wifi = new WifiConfiguration();
+        Log.i(TAG, ssid+password+authType);
 
         try {
-            // data's order for ANY object is
-            // 0: SSID
-            // 1: authentication algorithm,
-            // 2: authentication information
-            // 3: whether or not the SSID is hidden
-            String newSSID = data.getString(0);
-            String authType = data.getString(1);
-            String newPass = data.getString(2);
-            boolean isHiddenSSID = data.getBoolean(3);
 
-            wifi.hiddenSSID = isHiddenSSID;
-
-            if (authType.equals("WPA") || authType.equals("WPA2")) {
+            if (authType.equals("WPA2")) {
                 /**
-                 * WPA Data format:
+                 * WPA2 Data format:
                  * 0: ssid
                  * 1: auth
                  * 2: password
-                 * 3: isHiddenSSID
                  */
-                wifi.SSID = newSSID;
-                wifi.preSharedKey = newPass;
+                wifi.SSID = ssid;
+                wifi.preSharedKey = password;
 
                 wifi.status = WifiConfiguration.Status.ENABLED;
                 wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
@@ -251,7 +249,27 @@ public class AndroidWifi extends CordovaPlugin {
                 wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
                 wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
 
-                wifi.networkId = ssidToNetworkId(newSSID);
+                wifi.networkId = ssidToNetworkId(ssid, authType);
+
+            } else if (authType.equals("WPA")) {
+                /**
+                 * WPA Data format:
+                 * 0: ssid
+                 * 1: auth
+                 * 2: password
+                 */
+                wifi.SSID = ssid;
+                wifi.preSharedKey = password;
+
+                wifi.status = WifiConfiguration.Status.ENABLED;
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+
+                wifi.networkId = ssidToNetworkId(ssid, authType);
 
             } else if (authType.equals("WEP")) {
                 /**
@@ -259,14 +277,13 @@ public class AndroidWifi extends CordovaPlugin {
                  * 0: ssid
                  * 1: auth
                  * 2: password
-                 * 3: isHiddenSSID
                  */
-                wifi.SSID = newSSID;
+                wifi.SSID = ssid;
 
-                if (getHexKey(newPass)) {
-                    wifi.wepKeys[0] = newPass;
+                if (getHexKey(password)) {
+                    wifi.wepKeys[0] = password;
                 } else {
-                    wifi.wepKeys[0] = "\"" + newPass + "\"";
+                    wifi.wepKeys[0] = "\"" + password + "\"";
                 }
                 wifi.wepTxKeyIndex = 0;
 
@@ -283,7 +300,7 @@ public class AndroidWifi extends CordovaPlugin {
                 wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
                 wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
 
-                wifi.networkId = ssidToNetworkId(newSSID);
+                wifi.networkId = ssidToNetworkId(ssid, authType);
 
             } else if (authType.equals("NONE")) {
                 /**
@@ -293,20 +310,18 @@ public class AndroidWifi extends CordovaPlugin {
                  * 2: <not used>
                  * 3: isHiddenSSID
                  */
-                wifi.SSID = newSSID;
+                wifi.SSID = ssid;
                 wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                wifi.networkId = ssidToNetworkId(newSSID);
+                wifi.networkId = ssidToNetworkId(ssid, authType);
 
             } else {
 
-                Log.d(TAG, "Wifi Authentication Type Not Supported.");
-                callbackContext.error("AUTH_TYPE_NOT_SUPPORTED");
+                callbackContext.reject("AUTH_TYPE_NOT_SUPPORTED");
                 return false;
 
             }
-
             // Set network to highest priority (deprecated in API >= 26)
-            if (API_VERSION < 26) {
+            if( API_VERSION < 26 ){
                 wifi.priority = getMaxWifiPriority(wifiManager) + 1;
             }
 
@@ -314,35 +329,28 @@ public class AndroidWifi extends CordovaPlugin {
             if (wifi.networkId == -1) { // -1 means SSID configuration does not exist yet
 
                 int newNetId = wifiManager.addNetwork(wifi);
-                if (newNetId > -1) {
-                    callbackContext.success(newNetId);
+                Log.i(TAG, "NETID: " + newNetId);
+                if ( newNetId > -1 ){
+                    return newNetId;
                 } else {
-                    callbackContext.error("ERROR_ADDING_NETWORK");
+                    callbackContext.reject( "ERROR_ADDING_NETWORK" );
                 }
 
             } else {
 
                 int updatedNetID = wifiManager.updateNetwork(wifi);
 
-                if (updatedNetID > -1) {
-                    callbackContext.success(updatedNetID);
+                if( updatedNetID > -1 ){
+                    return updatedNetID;
                 } else {
-                    callbackContext.error("ERROR_UPDATING_NETWORK");
+                    callbackContext.reject( "ERROR_UPDATING_NETWORK" );
                 }
 
             }
-
-            // WifiManager configurations are presistent for API 26+
-            if (API_VERSION < 26) {
-                wifiManager.saveConfiguration(); // Call saveConfiguration for older < 26 API
-            }
-
-            return true;
-
+            return false;
 
         } catch (Exception e) {
-            callbackContext.error(e.getMessage());
-            Log.d(TAG, e.getMessage());
+            callbackContext.reject(e.getMessage());
             return false;
         }
     }
