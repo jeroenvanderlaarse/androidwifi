@@ -198,58 +198,7 @@ public class AndroidWifi extends CordovaPlugin {
         }  else if (action.equals(GET_CONNECTED_SSID)) {
             this.getConnectedSSID(callbackContext);
         } 
-            /*
-        } else if (action.equals(IS_CONNECTED_TO_INTERNET)) {
-            this.canConnectToInternet(callbackContext, true);
-        } else if (action.equals(CAN_CONNECT_TO_INTERNET)) {
-            this.canConnectToInternet(callbackContext, false);
-        } else if (action.equals(CAN_PING_WIFI_ROUTER)) {
-            this.canConnectToRouter(callbackContext, true);
-        } else if (action.equals(CAN_CONNECT_TO_ROUTER)) {
-            this.canConnectToRouter(callbackContext, false);
-        } else if (action.equals(ENABLE_NETWORK)) {
-            this.enable(callbackContext, data);
-        } else if (action.equals(DISABLE_NETWORK)) {
-            this.disable(callbackContext, data);
-        } else if (action.equals(GET_SSID_NET_ID)) {
-            this.getSSIDNetworkID(callbackContext, data);
-        } else if (action.equals(REASSOCIATE)) {
-            this.reassociate(callbackContext);
-        } else if (action.equals(RECONNECT)) {
-            this.reconnect(callbackContext);
-        } else if (action.equals(SCAN)) {
-            this.scan(callbackContext, data);
-        } else if (action.equals(REMOVE_NETWORK)) {
-            this.remove(callbackContext, data);
-        } else */
-        
-        /*
-    else if (action.equals(LIST_NETWORKS)) {
-            this.listNetworks(callbackContext);
-        } else if (action.equals(START_SCAN)) {
-            this.startScan(callbackContext);
-        } else if (action.equals(GET_SCAN_RESULTS)) {
-            this.getScanResults(callbackContext, data);
-        } else if (action.equals(DISCONNECT)) {
-            this.disconnect(callbackContext);
-        
-        } else if (action.equals(GET_CONNECTED_BSSID)) {
-            this.getConnectedBSSID(callbackContext);
-        } else if (action.equals(GET_CONNECTED_NETWORKID)) {
-            this.getConnectedNetworkID(callbackContext);
-        } else if (action.equals(RESET_BIND_ALL)) {
-            this.resetBindAll(callbackContext);
-        } else if (action.equals(SET_BIND_ALL)) {
-            this.setBindAll(callbackContext);
-        } else {
-            callbackContext.error("Incorrect action parameter: " + action);
-            // The ONLY time to return FALSE is when action does not exist that was called
-            // Returning false results in an INVALID_ACTION error, which translates to an error callback invoked on the JavaScript side
-            // All other errors should be handled with the fail callback (callbackContext.error)
-            // @see https://cordova.apache.org/docs/en/latest/guide/platforms/android/plugin.html
-            return false;
-        }
-        */
+
 
         return true;
     }
@@ -488,7 +437,7 @@ public class AndroidWifi extends CordovaPlugin {
             authType = data.getString(2);
         }
         catch (Exception e){
-            callbackContext.error(e.getMessage());
+            callbackContext.error("disconnectNetwork " + e.getMessage());
             Log.d(TAG, e.getMessage());
             return false;
         }
