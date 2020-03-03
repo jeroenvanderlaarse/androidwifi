@@ -70,9 +70,9 @@ var AndroidWifi = {
             ]);
             
         });
-    }
+    },
 
-        /**
+    /**
      * GetConnectedSSID (current if ssid not supplied)
      *
      * This method, if passed an ssid, will first disable the network, and then remove it from the device.  To only "disconnect" (ie disable in android),
