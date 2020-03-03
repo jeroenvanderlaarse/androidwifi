@@ -75,7 +75,6 @@ public class AndroidWifi extends CordovaPlugin {
 
     private ConnectivityManager connectivityManager;
 
-    private final BroadcastReceiver networkChangedReceiver = new NetworkChangedReceiver();
     private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
 
     static {
@@ -185,6 +184,8 @@ public class AndroidWifi extends CordovaPlugin {
             this.connect(callbackContext, data);
         } else if (action.equals(DISCONNECT_NETWORK)) {
             this.disconnectNetwork(callbackContext, data);
+        }  else if (action.equals(GET_CONNECTED_SSID)) {
+            this.getConnectedSSID(callbackContext);
         } 
             /*
         } else if (action.equals(IS_CONNECTED_TO_INTERNET)) {
@@ -220,8 +221,7 @@ public class AndroidWifi extends CordovaPlugin {
             this.getScanResults(callbackContext, data);
         } else if (action.equals(DISCONNECT)) {
             this.disconnect(callbackContext);
-        } else if (action.equals(GET_CONNECTED_SSID)) {
-            this.getConnectedSSID(callbackContext);
+        
         } else if (action.equals(GET_CONNECTED_BSSID)) {
             this.getConnectedBSSID(callbackContext);
         } else if (action.equals(GET_CONNECTED_NETWORKID)) {
@@ -386,11 +386,11 @@ public class AndroidWifi extends CordovaPlugin {
 
 
     public void connect(CallbackContext callbackContext, JSONArray data) {
-        Log.d(TAG, "WifiWizard2: connect entered.");
+        Log.d(TAG, "AndroidWifi: connect entered.");
 
         if (!validateData(data)) {
             callbackContext.error("CONNECT_INVALID_DATA");
-            Log.d(TAG, "WifiWizard2: connect invalid data.");
+            Log.d(TAG, "AndroidWifi: connect invalid data.");
             return;
         }
 
@@ -409,7 +409,7 @@ public class AndroidWifi extends CordovaPlugin {
                 this.forceWifiUsage(true);
 
                 // Wait for connection to finish, otherwise throw a timeout error
-                new ConnectAsync().execute(callbackContext, networkIdToConnect, this);
+                new ConnectAsync().execute(callbackContext, networkIdToConnect);
 
             } else {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
@@ -452,10 +452,10 @@ public class AndroidWifi extends CordovaPlugin {
      * @return true if network disconnected, false if failed
      */
     private boolean disconnectNetwork(CallbackContext callbackContext, JSONArray data) {
-        Log.d(TAG, "WifiWizard2: disconnectNetwork entered.");
+        Log.d(TAG, "AndroidWifi: disconnectNetwork entered.");
         if (!validateData(data)) {
             callbackContext.error("DISCONNECT_NET_INVALID_DATA");
-            Log.d(TAG, "WifiWizard2: disconnectNetwork invalid data");
+            Log.d(TAG, "AndroidWifi: disconnectNetwork invalid data");
             return false;
         }
 
@@ -484,20 +484,20 @@ public class AndroidWifi extends CordovaPlugin {
                     callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
                 } else {
                     callbackContext.error("DISCONNECT_NET_REMOVE_ERROR");
-                    Log.d(TAG, "WifiWizard2: Unable to remove network!");
+                    Log.d(TAG, "AndroidWifi: Unable to remove network!");
                     return false;
                 }
 
             } else {
                 callbackContext.error("DISCONNECT_NET_DISABLE_ERROR");
-                Log.d(TAG, "WifiWizard2: Unable to disable network!");
+                Log.d(TAG, "AndroidWifi: Unable to disable network!");
                 return false;
             }
 
             return true;
         } else {
             callbackContext.error("DISCONNECT_NET_ID_NOT_FOUND");
-            Log.d(TAG, "WifiWizard2: Network not found to disconnect.");
+            Log.d(TAG, "AndroidWifi: Network not found to disconnect.");
             return false;
         }
     }
@@ -572,7 +572,7 @@ public class AndroidWifi extends CordovaPlugin {
      * @param callbackContext A Cordova callback context
      * @return true if SSID found, false if not.
      */
-    private boolean getConnectedSSID(CallbackContext callbackContext) {
+    private String getConnectedSSID(CallbackContext callbackContext) {
         return getWifiServiceInfo(callbackContext);
     }
 
@@ -626,14 +626,14 @@ public class AndroidWifi extends CordovaPlugin {
                     @Override
                     public void onAvailable(Network network) {
                         manager.bindProcessToNetwork(network);
-                        String currentSSID = WifiService.this.getWifiServiceInfo(null);
+                        String currentSSID = AndroidWifi.this.getWifiServiceInfo(null);
 
                         if (currentSSID.equals(ssid)) {
-                            WifiService.this.getConnectedSSID(callbackContext);
+                            AndroidWifi.this.getConnectedSSID(callbackContext);
                         } else {
                             callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
                         }
-                        WifiService.this.networkCallback = this;
+                        AndroidWifi.this.networkCallback = this;
                     }
                     @Override
                     public void onUnavailable() {
@@ -668,20 +668,21 @@ public class AndroidWifi extends CordovaPlugin {
                     canWriteFlag = true;
                     // Don't need ACTION_MANAGE_WRITE_SETTINGS on 6.0.1, if we can positively identify it treat like 7+
                 } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    // On M 6.0.0 (N+ or higher and 6.0.1 hit above), we need ACTION_MANAGE_WRITE_SETTINGS to forceWifi.
-                    canWriteFlag = Settings.System.canWrite(this.context);
-                    if (!canWriteFlag) {
-                        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                        intent.setData(Uri.parse("package:" + this.context.getPackageName()));
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    canWriteFlag = true;
+                    // // On M 6.0.0 (N+ or higher and 6.0.1 hit above), we need ACTION_MANAGE_WRITE_SETTINGS to forceWifi.
+                    // canWriteFlag = Settings.System.canWrite(this.context);
+                    // if (!canWriteFlag) {
+                    //     Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                    //     intent.setData(Uri.parse("package:" + this.context.getPackageName()));
+                    //     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-                        this.context.startActivity(intent);
-                    }
+                    //     this.context.startActivity(intent);
+                    // }
                 }
 
                 if (((API_VERSION>= Build.VERSION_CODES.M) && canWriteFlag) || ((API_VERSION >= Build.VERSION_CODES.LOLLIPOP) && !(API_VERSION >= Build.VERSION_CODES.M))) {
-                    final ConnectivityManager manager = (ConnectivityManager) this.context
-                            .getSystemService(Context.CONNECTIVITY_SERVICE);
+                    final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
+                            //.getSystemService(Context.CONNECTIVITY_SERVICE);
                     NetworkRequest networkRequest = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();
                     manager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
                         @Override
@@ -703,8 +704,8 @@ public class AndroidWifi extends CordovaPlugin {
             }
         } else {
             if (API_VERSION >= Build.VERSION_CODES.M) {
-                ConnectivityManager manager = (ConnectivityManager) this.context
-                        .getSystemService(Context.CONNECTIVITY_SERVICE);
+                ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
+                        //.getSystemService(Context.CONNECTIVITY_SERVICE);
                 manager.bindProcessToNetwork(null);
             } else if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
                 ConnectivityManager.setProcessDefaultNetwork(null);
@@ -760,7 +761,7 @@ public class AndroidWifi extends CordovaPlugin {
           return new String[]{ null, "NETWORK_CONNECTION_COMPLETED" };
         }
 
-        Log.d(TAG, "WifiWizard: Got " + connectionState.name() + " on " + (i + 1) + " out of " + TIMES_TO_RETRY);
+        Log.d(TAG, "AndroidWifi: Got " + connectionState.name() + " on " + (i + 1) + " out of " + TIMES_TO_RETRY);
         final int ONE_SECOND = 1000;
 
         try {
@@ -770,46 +771,11 @@ public class AndroidWifi extends CordovaPlugin {
           return new String[]{ "INTERRUPT_EXCEPT_WHILE_CONNECTING", null };
         }
       }
-      Log.d(TAG, "WifiWizard: Network failed to finish connecting within the timeout");
+      Log.d(TAG, "AndroidWifi: Network failed to finish connecting within the timeout");
       return new String[]{ "CONNECT_FAILED_TIMEOUT", null };
     }
   }
 
-/**
-   * Network Changed Broadcast Receiver
-   */
-  private class NetworkChangedReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(final Context context, final Intent intent) {
-
-      if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(intent.getAction())) {
-
-        Log.d(TAG, "NETWORK_STATE_CHANGED_ACTION");
-
-        NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-        WifiInfo info = WifiWizard2.this.wifiManager.getConnectionInfo();
-
-        // Checks that you're connected to the desired network
-        if (networkInfo.isConnected() && info.getNetworkId() > -1) {
-
-          final String ssid = info.getSSID().replaceAll("\"", "");
-          final String bssid = info.getBSSID();
-
-          Log.d(TAG, "Connected to '" + ssid + "' @ " + bssid);
-
-          // Verify the desired network ID is what we actually connected to
-          if ( desired != null && info.getNetworkId() == desired.apId ) {
-            onSuccessfulConnection();
-          }
-
-        }
-
-      }
-
-    }
-
-  }
 
     private static int getMaxWifiPriority(final WifiManager wifiManager) {
         final List<WifiConfiguration> configurations = wifiManager.getConfiguredNetworks();
