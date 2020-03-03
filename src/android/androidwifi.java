@@ -528,13 +528,18 @@ public class AndroidWifi extends CordovaPlugin {
      * Validate JSON data
      */
     private boolean validateData(JSONArray data) {
+        Log.d(TAG, "[AndroidWifi]: validateData()" + data.toString());
+        Log.d(TAG, "[AndroidWifi]: size=" + data.size());
+
         try {
             if (data == null || data.get(0) == null) {
                 callbackContext.error("DATA_IS_NULL");
                 return false;
             }
+            Log.d(TAG, "[AndroidWifi]: validateData() OK" );
             return true;
         } catch (Exception e) {
+            Log.d(TAG, "[AndroidWifi]: validateData() in catch" );
             callbackContext.error(e.getMessage());
         }
         return false;
