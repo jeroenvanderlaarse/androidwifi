@@ -69,9 +69,6 @@ public class AndroidWifi extends CordovaPlugin {
     private ConnectivityManager connectivityManager;
     private ConnectivityManager.NetworkCallback networkCallback;
 
-    // Store AP, previous, and desired wifi info
-    private AP previous, desired;
-
     private final BroadcastReceiver networkChangedReceiver = new NetworkChangedReceiver();
     private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
 
@@ -628,5 +625,41 @@ if (API_VERSION >= 29) {
         }
 
     }
+
+/**
+   * Network Changed Broadcast Receiver
+   */
+  private class NetworkChangedReceiver extends BroadcastReceiver {
+
+    @Override
+    public void onReceive(final Context context, final Intent intent) {
+
+      if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(intent.getAction())) {
+
+        Log.d(TAG, "NETWORK_STATE_CHANGED_ACTION");
+
+        NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+        WifiInfo info = WifiWizard2.this.wifiManager.getConnectionInfo();
+
+        // Checks that you're connected to the desired network
+        if (networkInfo.isConnected() && info.getNetworkId() > -1) {
+
+          final String ssid = info.getSSID().replaceAll("\"", "");
+          final String bssid = info.getBSSID();
+
+          Log.d(TAG, "Connected to '" + ssid + "' @ " + bssid);
+
+          // Verify the desired network ID is what we actually connected to
+          if ( desired != null && info.getNetworkId() == desired.apId ) {
+            onSuccessfulConnection();
+          }
+
+        }
+
+      }
+
+    }
+
+  }
 
 }
