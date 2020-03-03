@@ -176,9 +176,20 @@ public class AndroidWifi extends CordovaPlugin {
 
         // Actions that DO require WiFi to be enabled
         if (action.equals(ADD_NETWORK)) {
-            String ssid = data.getString(0);
-            String password = data.getString(1);
-            String authType = data.getString(2);
+            String ssid = "";
+            String password = "";
+            String authType = "";
+            try {
+                ssid = data.getString(0);
+                password = data.getString(1);
+                authType = data.getString(2);
+            }
+            catch (Exception e){
+                callbackContext.error(e.getMessage());
+                Log.d(TAG, e.getMessage());
+                return false;
+            }
+            
             this.add(callbackContext, ssid, password, authType);
         } else if (action.equals(CONNECT_NETWORK)) {
             this.connect(callbackContext, data);
@@ -394,11 +405,22 @@ public class AndroidWifi extends CordovaPlugin {
             return;
         }
 
+        String ssid = "";
+        String password = "";
+        String authType = "";
+        try {
+            ssid = data.getString(0);
+            password = data.getString(1);
+            authType = data.getString(2);
+        }
+        catch (Exception e){
+            callbackContext.error(e.getMessage());
+            Log.d(TAG, e.getMessage());
+            return;
+        }
 
         if (API_VERSION < 29) {
-            String ssid = data.getString(0);
-            String password = data.getString(1);
-            String authType = data.getString(2);
+          
             this.add(callbackContext, ssid, password, authType);
 
             int networkIdToConnect = ssidToNetworkId(ssid, authType);
@@ -415,9 +437,6 @@ public class AndroidWifi extends CordovaPlugin {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
         } else {
-
-            String ssid = data.getString(0);
-            String password = data.getString(1);
 
             String connectedSSID = this.getWifiServiceInfo(callbackContext);
 
@@ -460,12 +479,12 @@ public class AndroidWifi extends CordovaPlugin {
         }
 
         String ssidToDisconnect = "";
-        String authType = data.getString(2);
-
-        // TODO: Verify type of data here!
+        String authType = "";
         try {
             ssidToDisconnect = data.getString(0);
-        } catch (Exception e) {
+            authType = data.getString(2);
+        }
+        catch (Exception e){
             callbackContext.error(e.getMessage());
             Log.d(TAG, e.getMessage());
             return false;
