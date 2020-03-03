@@ -41,11 +41,9 @@ var AndroidWifi = {
             }
 
             cordova.exec(resolve, reject, "AndroidWifi", "connect", [
-                { 
-                    "ssid": ssid, 
-                    "password" : password, 
-                    "authType" : authType
-                }
+                    ssid, 
+                    password, 
+                    authType
             ]);
         });
     },
@@ -68,8 +66,7 @@ var AndroidWifi = {
             }
 
             cordova.exec(resolve, reject, "AndroidWifi", "disconnect", [
-                { "ssid": ssid
-                }
+                ssid
             ]);
             
         });
