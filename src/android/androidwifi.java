@@ -92,7 +92,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         if (!validateData(data)) {
             callbackContext.error("CONNECT_INVALID_DATA");
-            Log.d(TAG, "[AndroidWifi]: " + action + " invalid data.");
+            Log.d(TAG, "AndroidWifi: " + action + " invalid data.");
             return false;
         }
 
@@ -140,6 +140,8 @@ public class AndroidWifi extends CordovaPlugin {
      */
     private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
        
+        Log.d(TAG, "AndroidWifi add(" + ssid + ")");
+
         // Initialize the WifiConfiguration object
         WifiConfiguration wifi = new WifiConfiguration();
         Log.i(TAG, ssid+password+authType);
@@ -273,9 +275,9 @@ public class AndroidWifi extends CordovaPlugin {
 
 
     public void connect(CallbackContext callbackContext, String ssid, String password, String authType) {
-        Log.d(TAG, "[AndroidWifi]: connect entered.");
+        Log.d(TAG, "AndroidWifi: connect entered.");
 
-        Log.d(TAG, "[AndroidWifi]: API_VERSION=" + API_VERSION);
+        Log.d(TAG, "AndroidWifi: API_VERSION=" + API_VERSION);
 
         if (API_VERSION < 29) {
           
@@ -295,7 +297,7 @@ public class AndroidWifi extends CordovaPlugin {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
         } else {
-            Log.d(TAG, "[AndroidWifi]: CALL getWifiServiceInfo");
+            Log.d(TAG, "AndroidWifi: CALL getWifiServiceInfo");
 
             String connectedSSID = this.getWifiServiceInfo(callbackContext);
 
@@ -368,18 +370,18 @@ public class AndroidWifi extends CordovaPlugin {
      * Validate JSON data
      */
     private boolean validateData(JSONArray data) {
-        Log.d(TAG, "[AndroidWifi]: validateData()" + data.toString());
-        //Log.d(TAG, "[AndroidWifi]: size=" + data.size());
+        Log.d(TAG, "AndroidWifi: validateData()" + data.toString());
+        //Log.d(TAG, "AndroidWifi: size=" + data.size());
 
         try {
             if (data == null || data.get(0) == null) {
                 callbackContext.error("DATA_IS_NULL");
                 return false;
             }
-            Log.d(TAG, "[AndroidWifi]: validateData() OK" );
+            Log.d(TAG, "AndroidWifi: validateData() OK" );
             return true;
         } catch (Exception e) {
-            Log.d(TAG, "[AndroidWifi]: validateData() in catch" );
+            Log.d(TAG, "AndroidWifi: validateData() in catch" );
             callbackContext.error(e.getMessage());
         }
         return false;
@@ -398,7 +400,7 @@ public class AndroidWifi extends CordovaPlugin {
 
     private String getWifiServiceInfo(CallbackContext callbackContext) {
 
-        Log.d(TAG, "[AndroidWifi]: in getWifiServiceInfo");
+        Log.d(TAG, "AndroidWifi: in getWifiServiceInfo");
 
         WifiInfo info = wifiManager.getConnectionInfo();
 
@@ -414,12 +416,12 @@ public class AndroidWifi extends CordovaPlugin {
             return null;
         }
 
-        Log.d(TAG, "[AndroidWifi]: getWifiServiceInfo() => info.getSSID()");
+        Log.d(TAG, "AndroidWifi: getWifiServiceInfo() => info.getSSID()");
 
         String serviceInfo;
         serviceInfo = info.getSSID();
 
-        Log.d(TAG, "[AndroidWifi]: getWifiServiceInfo()return serviceInfo=" + serviceInfo);
+        Log.d(TAG, "AndroidWifi: getWifiServiceInfo()return serviceInfo=" + serviceInfo);
 
         if (serviceInfo == null || serviceInfo.isEmpty() || serviceInfo == "0x") {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
@@ -454,10 +456,19 @@ public class AndroidWifi extends CordovaPlugin {
             // For each network in the list, compare the SSID with the given one and check if authType matches
             
             for (WifiConfiguration network : currentNetworks) {
-                if (network.SSID != null && network.SSID.equals(ssid)) {
-                  networkId = network.networkId;
-                  Log.i(TAG, "ssidToNetworkId(" + ssid + "):" + networkId);
-                  return networkId;
+                Log.i(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
+
+                if (network.SSID != null) {
+                    Log.i(TAG, "network.SSID.equals(ssid)? " + network.SSID + "|" + ssid);
+
+                    if (network.SSID.equals(ssid)) {
+                        networkId = network.networkId;
+                        Log.i(TAG, "yes. networkId=" + networkId);
+                    }
+                    else 
+                    {
+                        Log.i(TAG, "nope!");
+                    }
                 }
               }
             /*
