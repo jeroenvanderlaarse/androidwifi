@@ -442,6 +442,8 @@ public class AndroidWifi extends CordovaPlugin {
         
         Log.i(TAG, "ssidToNetworkId: ssid=" + ssid + "|authType=" + authType);
 
+        String ssidComp = "\"" + ssid + "\"";
+
         try {
 
             int maybeNetId = Integer.parseInt(ssid);
@@ -459,9 +461,9 @@ public class AndroidWifi extends CordovaPlugin {
                 Log.i(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
 
                 if (network.SSID != null) {
-                    Log.i(TAG, "network.SSID.equals(ssid)? " + network.SSID + "|" + ssid);
+                    Log.i(TAG, "network.SSID.equals(ssid)? " + network.SSID + "|" + ssidComp);
 
-                    if (network.SSID.equals(ssid)) {
+                    if (network.SSID.equals(ssidComp)) {
                         networkId = network.networkId;
                         Log.i(TAG, "yes. networkId=" + networkId);
                     }
