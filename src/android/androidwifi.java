@@ -38,42 +38,14 @@ public class AndroidWifi extends CordovaPlugin {
     private static final int API_VERSION = Build.VERSION.SDK_INT;
 
     private static final String ADD_NETWORK = "add";
-    private static final String REMOVE_NETWORK = "remove";
     private static final String CONNECT_NETWORK = "connect";
     private static final String DISCONNECT_NETWORK = "disconnectNetwork";
-    private static final String DISCONNECT = "disconnect";
-    private static final String LIST_NETWORKS = "listNetworks";
-    private static final String START_SCAN = "startScan";
-    private static final String GET_SCAN_RESULTS = "getScanResults";
     private static final String GET_CONNECTED_SSID = "getConnectedSSID";
-    private static final String GET_CONNECTED_BSSID = "getConnectedBSSID";
-    private static final String GET_CONNECTED_NETWORKID = "getConnectedNetworkID";
-    private static final String IS_WIFI_ENABLED = "isWifiEnabled";
-    private static final String SET_WIFI_ENABLED = "setWifiEnabled";
-    private static final String SCAN = "scan";
-    private static final String ENABLE_NETWORK = "enable";
-    private static final String DISABLE_NETWORK = "disable";
-    private static final String GET_SSID_NET_ID = "getSSIDNetworkID";
-    private static final String REASSOCIATE = "reassociate";
-    private static final String RECONNECT = "reconnect";
-    private static final String REQUEST_FINE_LOCATION = "requestFineLocation";
-    private static final String GET_WIFI_IP_ADDRESS = "getWifiIP";
-    private static final String GET_WIFI_ROUTER_IP_ADDRESS = "getWifiRouterIP";
-    private static final String CAN_PING_WIFI_ROUTER = "canPingWifiRouter";
-    private static final String CAN_CONNECT_TO_ROUTER = "canConnectToRouter";
-    private static final String CAN_CONNECT_TO_INTERNET = "canConnectToInternet";
-    private static final String IS_CONNECTED_TO_INTERNET = "isConnectedToInternet";
-    private static final String RESET_BIND_ALL = "resetBindAll";
-    private static final String SET_BIND_ALL = "setBindAll";
-    private static final String GET_WIFI_IP_INFO = "getWifiIPInfo";
-
+    
     private ConnectivityManager.NetworkCallback networkCallback;
-
+    private ConnectivityManager connectivityManager;
     private WifiManager wifiManager;
     private CallbackContext callbackContext;
-    private JSONArray passedData;
-
-    private ConnectivityManager connectivityManager;
 
     private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
 
@@ -117,68 +89,21 @@ public class AndroidWifi extends CordovaPlugin {
     throws JSONException {
 
         this.callbackContext = callbackContext;
-        this.passedData = data;
-/*
-        // Actions that do not require WiFi to be enabled
-        if (action.equals(IS_WIFI_ENABLED)) {
-            this.isWifiEnabled(callbackContext);
-            return true;
-        } else if (action.equals(SET_WIFI_ENABLED)) {
-            this.setWifiEnabled(callbackContext, data);
-            return true;
-        } else if (action.equals(REQUEST_FINE_LOCATION)) {
-            this.requestLocationPermission(LOCATION_REQUEST_CODE);
-            return true;
-        } else if (action.equals(GET_WIFI_ROUTER_IP_ADDRESS)) {
 
-            String ip = getWiFiRouterIP();
-
-            if (ip == null || ip.equals("0.0.0.0")) {
-                callbackContext.error("NO_VALID_ROUTER_IP_FOUND");
-                return true;
-            } else {
-                callbackContext.success(ip);
-                return true;
-            }
-
-        } else if (action.equals(GET_WIFI_IP_ADDRESS) || action.equals(GET_WIFI_IP_INFO)) {
-            String[] ipInfo = getWiFiIPAddress();
-            String ip = ipInfo[0];
-            String subnet = ipInfo[1];
-            if (ip == null || ip.equals("0.0.0.0")) {
-                callbackContext.error("NO_VALID_IP_IDENTIFIED");
-                return true;
-            }
-
-            // Return only IP address
-            if (action.equals(GET_WIFI_IP_ADDRESS)) {
-                callbackContext.success(ip);
-                return true;
-            }
-
-            // Return Wifi IP Info (subnet and IP as JSON object)
-            JSONObject result = new JSONObject();
-
-            result.put("ip", ip);
-            result.put("subnet", subnet);
-
-            callbackContext.success(result);
-            return true;
+        if (!validateData(data)) {
+            callbackContext.error("CONNECT_INVALID_DATA");
+            Log.d(TAG, "[AndroidWifi]: " + action + " invalid data.");
+            return false;
         }
-        
 
-        boolean wifiIsEnabled = verifyWifiEnabled();
-        if (!wifiIsEnabled) {
-            callbackContext.error("WIFI_NOT_ENABLED");
-            return true; // Even though enable wifi failed, we still return true and handle error in callback
-        }
-        */
+        String ssid = "";
+        String password = "";
+        String authType = "";
 
-        // Actions that DO require WiFi to be enabled
-        if (action.equals(ADD_NETWORK)) {
-            String ssid = "";
-            String password = "";
-            String authType = "";
+        if (action.equals(ADD_NETWORK) ||
+            action.equals(CONNECT_NETWORK) ||
+            action.equals(DISCONNECT_NETWORK)) {
+
             try {
                 ssid = data.getString(0);
                 password = data.getString(1);
@@ -189,16 +114,18 @@ public class AndroidWifi extends CordovaPlugin {
                 Log.d(TAG, e.getMessage());
                 return false;
             }
-            
+        }
+
+        // Actions that DO require WiFi to be enabled
+        if (action.equals(ADD_NETWORK)) {
             this.add(callbackContext, ssid, password, authType);
         } else if (action.equals(CONNECT_NETWORK)) {
-            this.connect(callbackContext, data);
+            this.connect(callbackContext, ssid, password, authType);
         } else if (action.equals(DISCONNECT_NETWORK)) {
-            this.disconnectNetwork(callbackContext, data);
+            this.disconnectNetwork(callbackContext, ssid, authType);
         }  else if (action.equals(GET_CONNECTED_SSID)) {
             this.getConnectedSSID(callbackContext);
         } 
-
 
         return true;
     }
@@ -345,28 +272,8 @@ public class AndroidWifi extends CordovaPlugin {
     }
 
 
-    public void connect(CallbackContext callbackContext, JSONArray data) {
+    public void connect(CallbackContext callbackContext, String ssid, String password, String authType) {
         Log.d(TAG, "[AndroidWifi]: connect entered.");
-
-        if (!validateData(data)) {
-            callbackContext.error("CONNECT_INVALID_DATA");
-            Log.d(TAG, "[AndroidWifi]: connect invalid data.");
-            return;
-        }
-
-        String ssid = "";
-        String password = "";
-        String authType = "";
-        try {
-            ssid = data.getString(0);
-            password = data.getString(1);
-            authType = data.getString(2);
-        }
-        catch (Exception e){
-            callbackContext.error(e.getMessage());
-            Log.d(TAG, e.getMessage());
-            return;
-        }
 
         Log.d(TAG, "[AndroidWifi]: API_VERSION=" + API_VERSION);
 
@@ -422,25 +329,9 @@ public class AndroidWifi extends CordovaPlugin {
      * @param data JSON Array, with [0] being SSID to connect
      * @return true if network disconnected, false if failed
      */
-    private boolean disconnectNetwork(CallbackContext callbackContext, JSONArray data) {
+    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String authType) {
+        
         Log.d(TAG, "AndroidWifi: disconnectNetwork entered.");
-        if (!validateData(data)) {
-            callbackContext.error("DISCONNECT_NET_INVALID_DATA");
-            Log.d(TAG, "AndroidWifi: disconnectNetwork invalid data");
-            return false;
-        }
-
-        String ssidToDisconnect = "";
-        String authType = "";
-        try {
-            ssidToDisconnect = data.getString(0);
-            authType = data.getString(2);
-        }
-        catch (Exception e){
-            callbackContext.error("disconnectNetwork " + e.getMessage());
-            Log.d(TAG, e.getMessage());
-            return false;
-        }
 
         int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect, authType);
 
@@ -494,54 +385,7 @@ public class AndroidWifi extends CordovaPlugin {
         return false;
     }
 
-    private int ssidToNetworkId(String ssid, String authType) {
-        try {
-
-            int maybeNetId = Integer.parseInt(ssid);
-            return maybeNetId;
-
-        } catch (NumberFormatException e) {
-            List < WifiConfiguration > currentNetworks = wifiManager.getConfiguredNetworks();
-            int networkId = -1;
-            // For each network in the list, compare the SSID with the given one and check if authType matches
-            Log.i(TAG, "MyNetwork: " + ssid + "|" + authType);
-
-            for (WifiConfiguration network: currentNetworks) {
-                Log.i(TAG, "Network: " + network.SSID + "|" + this.getSecurityType(network));
-
-                if (network.SSID != null) {
-                    if (authType.length() == 0) {
-                        if (network.SSID.equals(ssid)) {
-                            networkId = network.networkId;
-                        }
-                    } else {
-                        String testSSID = network.SSID + this.getSecurityType(network);
-                        if (testSSID.equals(ssid + authType)) {
-                            networkId = network.networkId;
-                        }
-                    }
-                }
-            }
-            // Fallback to WPA if WPA2 is not found
-            if (networkId == -1 && authType.substring(0, 3).equals("WPA")) {
-                for (WifiConfiguration network: currentNetworks) {
-                    if (network.SSID != null) {
-                        if (authType.length() == 0) {
-                            if (network.SSID.equals(ssid)) {
-                                networkId = network.networkId;
-                            }
-                        } else {
-                            String testSSID = network.SSID + this.getSecurityType(network).substring(0, 3);
-                            if (testSSID.equals(ssid + authType)) {
-                                networkId = network.networkId;
-                            }
-                        }
-                    }
-                }
-            }
-            return networkId;
-        }
-    }
+    
     /**
      * This method retrieves the SSID for the currently connected network
      *
@@ -592,7 +436,55 @@ public class AndroidWifi extends CordovaPlugin {
         return serviceInfo;
     }
 
+    private int ssidToNetworkId(String ssid, String authType) {
+        try {
 
+            int maybeNetId = Integer.parseInt(ssid);
+            return maybeNetId;
+
+        } catch (NumberFormatException e) {
+            List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
+            int networkId = -1;
+            // For each network in the list, compare the SSID with the given one and check if authType matches
+            Log.i(TAG, "MyNetwork: ssid=" + ssid + "|authType=" + authType);
+
+            for (WifiConfiguration network: currentNetworks) {
+                Log.i(TAG, "Network: " + network.SSID + "|" + this.getSecurityType(network));
+
+                if (network.SSID != null) {
+                    if (authType.length() == 0) {
+                        if (network.SSID.equals(ssid)) {
+                            networkId = network.networkId;
+                        }
+                    } else {
+                        String testSSID = network.SSID + this.getSecurityType(network);
+                        if (testSSID.equals(ssid + authType)) {
+                            networkId = network.networkId;
+                        }
+                    }
+                }
+            }
+            // Fallback to WPA if WPA2 is not found
+            if (networkId == -1 && authType.substring(0, 3).equals("WPA")) {
+                for (WifiConfiguration network: currentNetworks) {
+                    if (network.SSID != null) {
+                        if (authType.length() == 0) {
+                            if (network.SSID.equals(ssid)) {
+                                networkId = network.networkId;
+                            }
+                        } else {
+                            String testSSID = network.SSID + this.getSecurityType(network).substring(0, 3);
+                            if (testSSID.equals(ssid + authType)) {
+                                networkId = network.networkId;
+                            }
+                        }
+                    }
+                }
+            }
+            Log.i(TAG, "ssidToNetworkId(" + ssid + "):" + networkId);
+            return networkId;
+        }
+    }
     public void forceWifiUsageQ(CallbackContext callbackContext, String ssid, boolean useWifi, NetworkRequest networkRequest) {
 
         if (API_VERSION >= 29) {
