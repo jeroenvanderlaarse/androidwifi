@@ -437,19 +437,30 @@ public class AndroidWifi extends CordovaPlugin {
     }
 
     private int ssidToNetworkId(String ssid, String authType) {
+        
+        Log.i(TAG, "ssidToNetworkId: ssid=" + ssid + "|authType=" + authType);
+
         try {
 
             int maybeNetId = Integer.parseInt(ssid);
+            Log.d(TAG, "ssidToNetworkId passed SSID is integer, probably a Network ID: " + ssid);
             return maybeNetId;
 
         } catch (NumberFormatException e) {
+            
             List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
             int networkId = -1;
+            
             // For each network in the list, compare the SSID with the given one and check if authType matches
-            Log.i(TAG, "MyNetwork: ssid=" + ssid + "|authType=" + authType);
-
+            
+            for (WifiConfiguration network : currentNetworks) {
+                if (network.SSID != null && network.SSID.equals(ssid)) {
+                  networkId = network.networkId;
+                }
+              }
+            /*
             for (WifiConfiguration network: currentNetworks) {
-                Log.i(TAG, "Network: " + network.SSID + "|" + this.getSecurityType(network));
+                Log.i(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
 
                 if (network.SSID != null) {
                     if (authType.length() == 0) {
@@ -481,6 +492,7 @@ public class AndroidWifi extends CordovaPlugin {
                     }
                 }
             }
+            */
             Log.i(TAG, "ssidToNetworkId(" + ssid + "):" + networkId);
             return networkId;
         }
