@@ -456,6 +456,8 @@ public class AndroidWifi extends CordovaPlugin {
             for (WifiConfiguration network : currentNetworks) {
                 if (network.SSID != null && network.SSID.equals(ssid)) {
                   networkId = network.networkId;
+                  Log.i(TAG, "ssidToNetworkId(" + ssid + "):" + networkId);
+                  return networkId;
                 }
               }
             /*
