@@ -140,11 +140,10 @@ public class AndroidWifi extends CordovaPlugin {
      */
     private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
        
-        Log.d(TAG, "AndroidWifi add(" + ssid + ")");
+        Log.d(TAG, "AndroidWifi add(" + ssid + "|" + authType ")");
 
         // Initialize the WifiConfiguration object
         WifiConfiguration wifi = new WifiConfiguration();
-        Log.i(TAG, ssid+password+authType);
 
         try {
 
@@ -458,18 +457,14 @@ public class AndroidWifi extends CordovaPlugin {
             // For each network in the list, compare the SSID with the given one and check if authType matches
             
             for (WifiConfiguration network : currentNetworks) {
-                Log.i(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
+                Log.d(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
 
                 if (network.SSID != null) {
-                    Log.i(TAG, "network.SSID.equals(ssid)? " + network.SSID + "|" + ssidComp);
-
+                    
                     if (network.SSID.equals(ssidComp)) {
                         networkId = network.networkId;
-                        Log.i(TAG, "yes. networkId=" + networkId);
-                    }
-                    else 
-                    {
-                        Log.i(TAG, "nope!");
+                        Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
+                        return networkId;
                     }
                 }
               }
@@ -508,7 +503,7 @@ public class AndroidWifi extends CordovaPlugin {
                 }
             }
             */
-            Log.i(TAG, "ssidToNetworkId(" + ssid + "):" + networkId);
+            Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
             return networkId;
         }
     }

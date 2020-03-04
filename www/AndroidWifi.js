@@ -66,6 +66,11 @@ var AndroidWifi = {
                 return;
             }
 
+            if (!authType) {
+                reject('authType is missing!');
+                return;
+            }
+
             cordova.exec(resolve, reject, "AndroidWifi", "disconnectNetwork", [
                 ssid, 
                 password, 
