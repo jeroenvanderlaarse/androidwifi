@@ -445,25 +445,29 @@ public class AndroidWifi extends CordovaPlugin {
             Log.d(TAG, "ssidToNetworkId passed SSID is integer, probably a Network ID: " + ssid);
             return maybeNetId;
 
-        } catch (NumberFormatException e) {
-            
-            List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
-            int networkId = -1;
-            
-            // For each network in the list, compare the SSID with the given one and check if authType matches
-            
-            for (WifiConfiguration network : currentNetworks) {
-                Log.d(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
+        } 
+        catch (NumberFormatException e) {}
 
-                if (network.SSID != null) {
-                    
-                    if (network.SSID.equals(ssidComp)) {
-                        networkId = network.networkId;
-                        Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
-                        return networkId;
-                    }
+        int networkId = -1;
+
+        Log.i(TAG, "ssidToNetworkId: wifiManager.getConfiguredNetworks()");
+        
+        List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
+        
+        // For each network in the list, compare the SSID with the given one and check if authType matches
+        
+        for (WifiConfiguration network : currentNetworks) {
+            Log.d(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
+
+            if (network.SSID != null) {
+                
+                if (network.SSID.equals(ssidComp)) {
+                    networkId = network.networkId;
+                    Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
+                    return networkId;
                 }
-              }
+            }
+        }
             /*
             for (WifiConfiguration network: currentNetworks) {
                 Log.i(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
@@ -501,7 +505,7 @@ public class AndroidWifi extends CordovaPlugin {
             */
             Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
             return networkId;
-        }
+        
     }
     public void forceWifiUsageQ(CallbackContext callbackContext, String ssid, boolean useWifi, NetworkRequest networkRequest) {
 
