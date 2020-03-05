@@ -296,11 +296,11 @@ public class AndroidWifi extends CordovaPlugin {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
         } else {
-            Log.d(TAG, "AndroidWifi: CALL getWifiServiceInfo");
+            String connectedSSID = this.getConnectedSSID(callbackContext);
 
-            String connectedSSID = this.getWifiServiceInfo(callbackContext);
-
-            if (!ssid.equals(connectedSSID)) {
+            if (!ssid.equals(connectedSSID)) 
+            {
+                LOG.d(TAG, "!ssid.equals(connectedSSID)" + ssid + '|' + connectedSSID);
 
                 WifiNetworkSpecifier.Builder builder = new WifiNetworkSpecifier.Builder();
                 builder.setSsid(ssid);
@@ -394,12 +394,8 @@ public class AndroidWifi extends CordovaPlugin {
      * @return true if SSID found, false if not.
      */
     private String getConnectedSSID(CallbackContext callbackContext) {
-        return getWifiServiceInfo(callbackContext);
-    }
-
-    private String getWifiServiceInfo(CallbackContext callbackContext) {
-
-        Log.d(TAG, "AndroidWifi: in getWifiServiceInfo");
+    
+        Log.d(TAG, "getConnectedSSID");
 
         WifiInfo info = wifiManager.getConnectionInfo();
 
@@ -415,12 +411,12 @@ public class AndroidWifi extends CordovaPlugin {
             return null;
         }
 
-        Log.d(TAG, "AndroidWifi: getWifiServiceInfo() => info.getSSID()");
+        Log.d(TAG, "getConnectedSSID() => info.getSSID()");
 
         String serviceInfo;
         serviceInfo = info.getSSID();
 
-        Log.d(TAG, "AndroidWifi: getWifiServiceInfo()return serviceInfo=" + serviceInfo);
+        Log.d(TAG, "serviceInfo=" + serviceInfo);
 
         if (serviceInfo == null || serviceInfo.isEmpty() || serviceInfo == "0x") {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
@@ -432,7 +428,7 @@ public class AndroidWifi extends CordovaPlugin {
             serviceInfo = serviceInfo.substring(1, serviceInfo.length() - 1);
         }
 
-        
+        Log.d(TAG, "stripped serviceInfo=" + serviceInfo);
 
         return serviceInfo;
     }
@@ -524,10 +520,10 @@ public class AndroidWifi extends CordovaPlugin {
                     @Override
                     public void onAvailable(Network network) {
                         manager.bindProcessToNetwork(network);
-                        String currentSSID = AndroidWifi.this.getWifiServiceInfo(null);
+                        String currentSSID = AndroidWifi.this.getConnectedSSID(callbackContext);
 
                         if (currentSSID.equals(ssid)) {
-                            AndroidWifi.this.getConnectedSSID(callbackContext);
+                            //AndroidWifi.this.getConnectedSSID(callbackContext);
                             callbackContext.success("connected to " + currentSSID);
                         } else {
                             callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
