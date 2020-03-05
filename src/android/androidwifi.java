@@ -364,7 +364,9 @@ public class AndroidWifi extends CordovaPlugin {
             List<WifiNetworkSuggestion> suggestionsList = new ArrayList<>();
             suggestionsList.add(networkSuggestion1);
 
-            if (wifiManager.removeNetworkSuggestions(suggestionsList)) {
+            int result = wifiManager.removeNetworkSuggestions(suggestionsList);
+
+            if (result == STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
              
                 callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
 
