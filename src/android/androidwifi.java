@@ -122,7 +122,7 @@ public class AndroidWifi extends CordovaPlugin {
         } else if (action.equals(CONNECT_NETWORK)) {
             this.connect(callbackContext, ssid, password, authType);
         } else if (action.equals(DISCONNECT_NETWORK)) {
-            this.disconnectNetwork(callbackContext, ssid, authType);
+            this.disconnectNetwork(callbackContext, ssid, password, authType);
         }  else if (action.equals(GET_CONNECTED_SSID)) {
             this.getConnectedSSID(callbackContext);
         } 
@@ -330,13 +330,50 @@ public class AndroidWifi extends CordovaPlugin {
      * @param data JSON Array, with [0] being SSID to connect
      * @return true if network disconnected, false if failed
      */
-    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String authType) {
+    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String password, String authType) {
         
         Log.d(TAG, "AndroidWifi: disconnectNetwork entered.");
 
-        int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect, authType);
+        WifiInfo info = wifiManager.getConnectionInfo();
+        
+        if (info == null) {
+            callbackContext.error("UNABLE_TO_READ_WIFI_INFO");
+            return false;
+        }
 
+        String connectedSSID = strip(info.getSSID());
+
+        if (!ssidToDisconnect.equals(connectedSSID)){
+
+            callbackContext.success("Network " + ssidToDisconnect + " disconnected");
+            return true;
+        }
+
+        int networkIdToDisconnect = info.NetworkId();
+       
         if (networkIdToDisconnect > 0) {
+
+            WifiNetworkSuggestion networkSuggestion1 =
+                    new WifiNetworkSuggestion.Builder()
+                            .setSsid(ssidToDisconnect)
+                            .setWpa2Passphrase(password)
+                            .build();
+
+            List<WifiNetworkSuggestion> suggestionsList = new ArrayList<>();
+            suggestionsList.add(networkSuggestion1);
+
+            if (wifiManager.removeNetworkSuggestions(suggestionsList) {
+             
+                callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
+
+            } else {
+                callbackContext.error("DISCONNECT_NET_REMOVE_ERROR");
+                Log.d(TAG, "AndroidWifi: Unable to remove network!");
+                return false;
+            }
+
+            /*
+
 
             if (wifiManager.disableNetwork(networkIdToDisconnect)) {
 
@@ -356,6 +393,7 @@ public class AndroidWifi extends CordovaPlugin {
                 Log.d(TAG, "AndroidWifi: Unable to disable network!");
                 return false;
             }
+            */
 
             return true;
         } else {
@@ -363,6 +401,7 @@ public class AndroidWifi extends CordovaPlugin {
             Log.d(TAG, "AndroidWifi: Network not found to disconnect.");
             return false;
         }
+
     }
 
     /**
@@ -394,6 +433,8 @@ public class AndroidWifi extends CordovaPlugin {
      * @return true if SSID found, false if not.
      */
     private String getConnectedSSID(CallbackContext callbackContext) {
+
+        String connectedSSID = "";
     
         Log.d(TAG, "getConnectedSSID");
 
@@ -413,24 +454,28 @@ public class AndroidWifi extends CordovaPlugin {
 
         Log.d(TAG, "getConnectedSSID() => info.getSSID()");
 
-        String serviceInfo;
-        serviceInfo = info.getSSID();
+        String ssidRaw = info.getSSID();
 
-        Log.d(TAG, "serviceInfo=" + serviceInfo);
+        Log.d(TAG, "serviceInfo=" + ssidRaw);
 
-        if (serviceInfo == null || serviceInfo.isEmpty() || serviceInfo == "0x") {
+        if (ssidRaw == null || ssidRaw.isEmpty() || ssidRaw == "0x") {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
             return null;
         }
 
-        // http://developer.android.com/reference/android/net/wifi/WifiInfo.html#getSSID()
-        if (serviceInfo.startsWith("\"") && serviceInfo.endsWith("\"")) {
-            serviceInfo = serviceInfo.substring(1, serviceInfo.length() - 1);
+        connectedSSID = strip(ssidRaw);
+
+        Log.d(TAG, "stripped serviceInfo=" + connectedSSID);
+
+        return connectedSSID;
+    }
+
+    private String strip(String input){
+        String output = input;
+        if (input.startsWith("\"") && input.endsWith("\"")) {
+            output = input.substring(1, input.length() - 1);
         }
-
-        Log.d(TAG, "stripped serviceInfo=" + serviceInfo);
-
-        return serviceInfo;
+        return output;
     }
 
     private int ssidToNetworkId(String ssid, String authType) {
