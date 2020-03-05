@@ -39,6 +39,8 @@ public class AndroidWifi extends CordovaPlugin {
     private static String TAG = "AndroidWifi";
     private static final int API_VERSION = Build.VERSION.SDK_INT;
 
+    private static final int STATUS_NETWORK_SUGGESTIONS_SUCCESS = 0;
+
     private static final String ADD_NETWORK = "add";
     private static final String CONNECT_NETWORK = "connect";
     private static final String DISCONNECT_NETWORK = "disconnectNetwork";
