@@ -19,6 +19,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiNetworkSpecifier;
+import android.net.wifi.WifiNetworkSuggestion;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.PatternMatcher;
@@ -30,6 +31,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AndroidWifi extends CordovaPlugin {
@@ -349,7 +351,7 @@ public class AndroidWifi extends CordovaPlugin {
             return true;
         }
 
-        int networkIdToDisconnect = info.NetworkId();
+        int networkIdToDisconnect = info.getNetworkId();
        
         if (networkIdToDisconnect > 0) {
 
