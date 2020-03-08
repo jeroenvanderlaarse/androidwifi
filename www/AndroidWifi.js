@@ -40,7 +40,7 @@ var AndroidWifi = {
             }
 
             cordova.exec(resolve, reject, "AndroidWifi", "connect", [
-                ssid, 
+                AndroidWifi.formatWifiString(ssid),
                 password, 
                 authType
             ]);
@@ -72,7 +72,7 @@ var AndroidWifi = {
             }
 
             cordova.exec(resolve, reject, "AndroidWifi", "disconnectNetwork", [
-                ssid, 
+                AndroidWifi.formatWifiString(ssid),
                 password, 
                 authType
             ]);
@@ -93,7 +93,28 @@ var AndroidWifi = {
             cordova.exec(resolve, reject, "AndroidWifi", "getConnectedSSID", []);
             
         });
-    }
+    },
+    formatWifiString: function (ssid) {
+
+        if (ssid === parseInt(ssid, 10)) {
+            return ssid;
+        }
+
+        if (ssid === undefined || ssid === null || ssid === false) {
+            ssid = "";
+        }
+        ssid = ssid.trim();
+
+        if (ssid.charAt(0) != '"') {
+            ssid = '"' + ssid;
+        }
+
+        if (ssid.charAt(ssid.length - 1) != '"') {
+            ssid = ssid + '"';
+        }
+
+        return ssid;
+    },
 };
 
 module.exports = AndroidWifi;
