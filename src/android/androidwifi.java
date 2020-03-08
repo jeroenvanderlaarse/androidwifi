@@ -107,8 +107,8 @@ public class AndroidWifi extends CordovaPlugin {
             action.equals(DISCONNECT_NETWORK)) {
 
             try {
-                ssid = data.getString(0);
-                password = data.getString(1);
+                ssid = "'" + data.getString(0) + "'";
+                password = "'" + data.getString(1) + "'";
                 authType = data.getString(2);
             }
             catch (Exception e){
@@ -334,10 +334,8 @@ public class AndroidWifi extends CordovaPlugin {
      * @param data JSON Array, with [0] being SSID to connect
      * @return true if network disconnected, false if failed
      */
-    private boolean disconnectNetwork(CallbackContext callbackContext, String ssid, String password, String authType) {
+    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String password, String authType) {
         
-        String ssidToDisconnect = '"' + ssid + '"';
-
         Log.d(TAG, "disconnectNetwork entered, ssid=" + ssidToDisconnect);
 
         String connectedSSID = get_connectionInfo_SSID(callbackContext);
@@ -503,15 +501,16 @@ public class AndroidWifi extends CordovaPlugin {
      * This method takes a given String, searches the current list of configured WiFi networks, and
      * returns the networkId for the network if the SSID matches. If not, it returns -1.
      */
-    private int ssidToNetworkId(String ssidWithoutQuotes, String authType) {
+    private int ssidToNetworkId(String ssid, String _authType) {
+        String authType = "WPA2";
         int networkId = -1;
         try {
 
-            int maybeNetId = Integer.parseInt(ssidWithoutQuotes);
+            int maybeNetId = Integer.parseInt(ssid);
             return maybeNetId;
 
         } catch (NumberFormatException e) {
-            String ssid = '"' + ssidWithoutQuotes + '"';
+    
 
             List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
             
