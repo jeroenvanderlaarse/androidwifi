@@ -499,14 +499,16 @@ public class AndroidWifi extends CordovaPlugin {
      * This method takes a given String, searches the current list of configured WiFi networks, and
      * returns the networkId for the network if the SSID matches. If not, it returns -1.
      */
-    private int ssidToNetworkId(String ssid, String authType) {
+    private int ssidToNetworkId(String ssidWithoutQuotes, String authType) {
         int networkId = -1;
         try {
 
-            int maybeNetId = Integer.parseInt(ssid);
+            int maybeNetId = Integer.parseInt(ssidWithoutQuotes);
             return maybeNetId;
 
         } catch (NumberFormatException e) {
+            String ssid = '"' + ssidWithoutQuotes + '"';
+
             List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
             
             // For each network in the list, compare the SSID with the given one and check if authType matches
