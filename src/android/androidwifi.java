@@ -334,11 +334,15 @@ public class AndroidWifi extends CordovaPlugin {
      * @param data JSON Array, with [0] being SSID to connect
      * @return true if network disconnected, false if failed
      */
-    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String password, String authType) {
+    private boolean disconnectNetwork(CallbackContext callbackContext, String ssid, String password, String authType) {
         
-        Log.d(TAG, "disconnectNetwork entered.");
+        String ssidToDisconnect = '"' + ssid + '"';
+
+        Log.d(TAG, "disconnectNetwork entered, ssid=" + ssidToDisconnect);
 
         String connectedSSID = get_connectionInfo_SSID(callbackContext);
+
+        Log.d(TAG, "connectedSSID=" + connectedSSID);
 
         if (!ssidToDisconnect.equals(connectedSSID)){
 
