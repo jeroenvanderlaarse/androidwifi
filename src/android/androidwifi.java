@@ -452,7 +452,7 @@ public class AndroidWifi extends CordovaPlugin {
         Log.d(TAG, "NETWORK_STATE_CHANGED_ACTION");
 
         NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-        WifiInfo info = WifiWizard2.this.wifiManager.getConnectionInfo();
+        WifiInfo info = AndroidWifi.this.wifiManager.getConnectionInfo();
 
         // Checks that you're connected to the desired network
         if (networkInfo.isConnected() && info.getNetworkId() > -1) {
@@ -489,6 +489,73 @@ public class AndroidWifi extends CordovaPlugin {
       cordova.getActivity().getApplicationContext().registerReceiver(networkChangedReceiver, NETWORK_STATE_CHANGED_FILTER);
     } else {
       Log.d(TAG, "registerBindALL: API older than 21, bindall ignored.");
+    }
+  }
+
+  /**
+   * Called after successful connection to WiFi when using BindAll feature
+   *
+   * This method is called by the NetworkChangedReceiver after network changed action, and confirming that we are in fact connected to wifi,
+   * and the wifi we're connected to, is the correct network set in enable, or connect.
+   */
+  private void onSuccessfulConnection() {
+    // On Lollipop+ the OS routes network requests through mobile data
+    // when phone is attached to a wifi that doesn't have Internet connection
+    // We use the ConnectivityManager to force bind all requests from our process
+    // to the wifi without internet
+    // see https://android-developers.googleblog.com/2016/07/connecting-your-app-to-wi-fi-device.html
+
+    // Marshmallow OS or newer
+    if ( API_VERSION >= 23 ) {
+
+      Log.d(TAG, "BindALL onSuccessfulConnection API >= 23");
+
+      // Marshmallow (API 23+) or newer uses bindProcessToNetwork
+      final NetworkRequest request = new NetworkRequest.Builder()
+          .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+//          .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+          .build();
+
+      networkCallback = new ConnectivityManager.NetworkCallback() {
+        @Override
+        public void onAvailable(Network network) {
+          if( connectivityManager.bindProcessToNetwork(network) ){
+            Log.d(TAG, "bindProcessToNetwork TRUE onSuccessfulConnection");
+          } else {
+            Log.d(TAG, "bindProcessToNetwork FALSE onSuccessfulConnection");
+          }
+        }
+      };
+
+      connectivityManager.requestNetwork(request, networkCallback);
+
+      // Only lollipop (API 21 && 22) use setProcessDefaultNetwork, API < 21 already does this by default
+    } else if( API_VERSION >= 21 && API_VERSION < 23 ){
+
+      Log.d(TAG, "BindALL onSuccessfulConnection API >= 21 && < 23");
+
+      // Lollipop (API 21-22) use setProcessDefaultNetwork (deprecated in API 23 - Marshmallow)
+      final NetworkRequest request = new NetworkRequest.Builder()
+          .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+//          .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+          .build();
+
+      networkCallback = new ConnectivityManager.NetworkCallback() {
+        @Override
+        public void onAvailable(Network network) {
+          connectivityManager.setProcessDefaultNetwork(network);
+        }
+      };
+
+      connectivityManager.requestNetwork(request, networkCallback);
+
+    } else {
+      // Technically we should never reach this with older API, but just in case
+      Log.d(TAG, "BindALL onSuccessfulConnection API older than 21, no need to do any binding");
+      networkCallback = null;
+      previous = null;
+      desired = null;
+
     }
   }
 
