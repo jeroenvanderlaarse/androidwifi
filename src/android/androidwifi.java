@@ -107,8 +107,8 @@ public class AndroidWifi extends CordovaPlugin {
             action.equals(DISCONNECT_NETWORK)) {
 
             try {
-                ssid = "'" + data.getString(0) + "'";
-                password = "'" + data.getString(1) + "'";
+                ssid = '"' + data.getString(0) + '"';
+                password = '"' + data.getString(1) + '"';
                 authType = data.getString(2);
             }
             catch (Exception e){
@@ -551,6 +551,7 @@ public class AndroidWifi extends CordovaPlugin {
                 }
             }
         }
+        Log.i(TAG, "networkId: " + networkId);
         return networkId;
     }
     
