@@ -441,6 +441,7 @@ public class AndroidWifi extends CordovaPlugin {
         if (connectedSSID != null) {
             callbackContext.success(connectedSSID);
         }
+        return (connectedSSID != null);
     }
 
     private String get_connectionInfo_SSID(CallbackContext callbackContext) {
