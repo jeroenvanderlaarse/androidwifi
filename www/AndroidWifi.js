@@ -40,7 +40,7 @@ var AndroidWifi = {
             }
 
             cordova.exec(resolve, reject, "AndroidWifi", "connect", [
-                AndroidWifi.formatWifiString(ssid),
+                ssid,
                 password, 
                 authType
             ]);
@@ -72,7 +72,7 @@ var AndroidWifi = {
             }
 
             cordova.exec(resolve, reject, "AndroidWifi", "disconnectNetwork", [
-                AndroidWifi.formatWifiString(ssid),
+                ssid,
                 password, 
                 authType
             ]);
@@ -81,40 +81,16 @@ var AndroidWifi = {
     },
 
     /**
-     * GetConnectedSSID (current if ssid not supplied)
-     *
-     * This method, if passed an ssid, will first disable the network, and then remove it from the device.  To only "disconnect" (ie disable in android),
-     * call AndroidWifi.disable() instead of disconnect.
+     * GetConnectedSSID
      *
      * @returns {Promise<any>}
      */
-    getConnectedSSID: function (ssid) {
+    getConnectedSSID: function () {
         return new Promise(function (resolve, reject) {
             cordova.exec(resolve, reject, "AndroidWifi", "getConnectedSSID", []);
             
         });
-    },
-    formatWifiString: function (ssid) {
-
-        if (ssid === parseInt(ssid, 10)) {
-            return ssid;
-        }
-
-        if (ssid === undefined || ssid === null || ssid === false) {
-            ssid = "";
-        }
-        ssid = ssid.trim();
-
-        if (ssid.charAt(0) != '"') {
-            ssid = '"' + ssid;
-        }
-
-        if (ssid.charAt(ssid.length - 1) != '"') {
-            ssid = ssid + '"';
-        }
-
-        return ssid;
-    },
+    }
 };
 
 module.exports = AndroidWifi;

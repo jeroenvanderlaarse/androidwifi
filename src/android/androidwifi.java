@@ -297,8 +297,10 @@ public class AndroidWifi extends CordovaPlugin {
             } else {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
-        } else {
-            String connectedSSID = this.getConnectedSSID(callbackContext);
+        } else { // API_VERSION >= 29 Android 10
+            String connectedSSID = this.get_connectionInfo_SSID(callbackContext);
+
+            Log.i(TAG, "ssid.equals(connectedSSID): " + ssid + "|" + currentSSID);
 
             if (!ssid.equals(connectedSSID)) 
             {
@@ -344,7 +346,9 @@ public class AndroidWifi extends CordovaPlugin {
             return true;
         }
 
-        int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect);
+        int networkIdToDisconnect = get_connectionInfo_networkId(callbackContext);
+
+        Log.d(TAG, "disconnectNetwork() => networkIdToDisconnect=" + networkIdToDisconnect);
        
         if (networkIdToDisconnect > 0) {
 
@@ -352,26 +356,26 @@ public class AndroidWifi extends CordovaPlugin {
 
                 if( wifiManager.disableNetwork(networkIdToDisconnect) ){
 
-                    ww2_maybeResetBindALL();
+                    // maybeResetBindALL();
             
                     // We also remove the configuration from the device (use "disable" to keep config)
-                    if( wifiManager.removeNetwork(networkIdToDisconnect) ){
-                      callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
+                    if ( wifiManager.removeNetwork(networkIdToDisconnect) ){
+                        callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
                     } else {
-                      callbackContext.error("DISCONNECT_NET_REMOVE_ERROR");
-                      Log.d(TAG, "Unable to remove network!");
-                      return false;
+                        callbackContext.error("DISCONNECT_NET_REMOVE_ERROR");
+                        Log.d(TAG, "Unable to remove network!");
+                        return false;
                     }
             
-                  } else {
+                } else {
                     callbackContext.error("DISCONNECT_NET_DISABLE_ERROR");
                     Log.d(TAG, "Unable to disable network!");
                     return false;
-                  }
-            
-                  return true;
+                }
+        
+                return true;
                 
-            } else { //API_VERSION >= 29
+            } else { // API_VERSION >= 29 Android 10
 
                 WifiNetworkSuggestion networkSuggestion1 =
                 new WifiNetworkSuggestion.Builder()
@@ -389,7 +393,7 @@ public class AndroidWifi extends CordovaPlugin {
                     callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
 
                 } else {
-                    callbackContext.error("DISCONNECT_NET_REMOVE_ERROR");
+                    callbackContext.error("DISCONNECT_NET_REMOVE_ERROR rc=" + result);
                     Log.d(TAG, "Unable to remove network!");
                     return false;
                 }
@@ -471,76 +475,79 @@ public class AndroidWifi extends CordovaPlugin {
         return SSID;
     }
 
-    private int ssidToNetworkId(String ssid, String authType) {
-        
-        Log.i(TAG, "ssidToNetworkId: ssid=" + ssid + "|authType=" + authType);
+    private int get_connectionInfo_networkId(CallbackContext callbackContext) {
 
+        WifiInfo info = wifiManager.getConnectionInfo();
+
+        if (info == null) {
+            callbackContext.error("UNABLE_TO_READ_WIFI_INFO");
+            return -1;
+        }
+
+        // Only return SSID when actually connected to a network
+        SupplicantState state = info.getSupplicantState();
+        if (!state.equals(SupplicantState.COMPLETED)) {
+            callbackContext.error("CONNECTION_NOT_COMPLETED");
+            return -1;
+        }
+
+        return info.getNetworkId();
+    }
+
+      /**
+     * This method takes a given String, searches the current list of configured WiFi networks, and
+     * returns the networkId for the network if the SSID matches. If not, it returns -1.
+     */
+    private int ssidToNetworkId(String ssid, String authType) {
+        int networkId = -1;
         try {
 
             int maybeNetId = Integer.parseInt(ssid);
-            Log.d(TAG, "ssidToNetworkId passed SSID is integer, probably a Network ID: " + ssid);
             return maybeNetId;
 
-        } catch (NumberFormatException e) {}
+        } catch (NumberFormatException e) {
+            List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
+            
+            // For each network in the list, compare the SSID with the given one and check if authType matches
+            Log.i(TAG, "MyNetwork: " + ssid + "|" + authType);
 
-        int networkId = -1;
-
-        Log.i(TAG, "ssidToNetworkId: wifiManager.getConfiguredNetworks()");
-        
-        List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
-        
-        // For each network in the list, compare the SSID with the given one and check if authType matches
-        for (WifiConfiguration network : currentNetworks) {
-            Log.d(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
-
-            if (network.SSID != null) {
-                
-                if (network.SSID.equals(ssid)) {
-                    networkId = network.networkId;
-                    Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
-                    return networkId;
-                }
-            }
-        }
-            /*
-            for (WifiConfiguration network: currentNetworks) {
-                Log.i(TAG, "ssidToNetworkId: " + network.SSID + "|" + this.getSecurityType(network));
+            for (WifiConfiguration network : currentNetworks) {
+                Log.i(TAG, "Network: " + network.SSID + "|" + this.getSecurityType(network));
 
                 if (network.SSID != null) {
                     if (authType.length() == 0) {
-                        if (network.SSID.equals(ssid)) {
+                        if(network.SSID.equals(ssid)) {
                             networkId = network.networkId;
                         }
                     } else {
                         String testSSID = network.SSID + this.getSecurityType(network);
-                        if (testSSID.equals(ssid + authType)) {
+                        if(testSSID.equals(ssid + authType)) {
                             networkId = network.networkId;
                         }
                     }
                 }
             }
             // Fallback to WPA if WPA2 is not found
-            if (networkId == -1 && authType.substring(0, 3).equals("WPA")) {
-                for (WifiConfiguration network: currentNetworks) {
+            if (networkId == -1 && authType.substring(0,3).equals("WPA")) {
+                for (WifiConfiguration network : currentNetworks) {
                     if (network.SSID != null) {
                         if (authType.length() == 0) {
-                            if (network.SSID.equals(ssid)) {
+                            if(network.SSID.equals(ssid)) {
                                 networkId = network.networkId;
                             }
                         } else {
-                            String testSSID = network.SSID + this.getSecurityType(network).substring(0, 3);
-                            if (testSSID.equals(ssid + authType)) {
+                            String testSSID = network.SSID + this.getSecurityType(network).substring(0,3);
+                            if(testSSID.equals(ssid + authType)) {
                                 networkId = network.networkId;
                             }
                         }
                     }
                 }
             }
-            */
-            Log.d(TAG, "ssidToNetworkId(" + ssid + ")=" + networkId);
-            return networkId;
-        
+        }
+        return networkId;
     }
+    
     public void forceWifiUsageQ(CallbackContext callbackContext, String ssid, boolean useWifi, NetworkRequest networkRequest) {
 
         if (API_VERSION >= 29) {
@@ -558,10 +565,11 @@ public class AndroidWifi extends CordovaPlugin {
                     @Override
                     public void onAvailable(Network network) {
                         manager.bindProcessToNetwork(network);
-                        String currentSSID = AndroidWifi.this.getConnectedSSID(callbackContext);
+                        String currentSSID = AndroidWifi.this.get_connectionInfo_SSID(callbackContext);
+
+                        Log.i(TAG, "currentSSID.equals(ssid): " + currentSSID + "|" + ssid);
 
                         if (currentSSID.equals(ssid)) {
-                            //AndroidWifi.this.getConnectedSSID(callbackContext);
                             callbackContext.success("connected to " + currentSSID);
                         } else {
                             callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
@@ -721,52 +729,6 @@ public class AndroidWifi extends CordovaPlugin {
 
         return maxPriority;
     }
-
-      /**
-   * Maybe reset bind all after disconnect/disable
-   *
-   * This method unregisters the network changed receiver, as well as setting null for
-   * bindProcessToNetwork or setProcessDefaultNetwork to prevent future sockets from application
-   * being routed through Wifi.
-   */
-  private void ww2_maybeResetBindALL(){
-
-    Log.d(TAG, "ww2_maybeResetBindALL");
-
-    // desired should have a value if receiver is registered
-    if( desired != null ){
-
-      if( API_VERSION > 21 ){
-
-        try {
-          // Unregister net changed receiver -- should only be registered in API versions > 21
-          cordova.getActivity().getApplicationContext().unregisterReceiver(networkChangedReceiver);
-        } catch (Exception e) {}
-
-      }
-
-      // Lollipop OS or newer
-      if ( API_VERSION >= 23 ) {
-        connectivityManager.bindProcessToNetwork(null);
-      } else if( API_VERSION >= 21 && API_VERSION < 23 ){
-        connectivityManager.setProcessDefaultNetwork(null);
-      }
-
-      if ( API_VERSION > 21 && networkCallback != null) {
-
-        try {
-          // Same behavior as releaseNetworkRequest
-          connectivityManager.unregisterNetworkCallback(networkCallback); // Added in API 21
-        } catch (Exception e) {}
-      }
-
-      networkCallback = null;
-      previous = null;
-      desired = null;
-
-    }
-
-  }
 
     private String strip(String input){
         String output = input;
