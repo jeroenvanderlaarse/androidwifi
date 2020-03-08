@@ -49,10 +49,7 @@ public class AndroidWifi extends CordovaPlugin {
     private WifiManager wifiManager;
     private CallbackContext callbackContext;
 
-    // Store AP, previous, and desired wifi info
-    private AP previous, desired;
 
-    private final BroadcastReceiver networkChangedReceiver = new NetworkChangedReceiver();
     private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
 
     static {
@@ -106,8 +103,7 @@ public class AndroidWifi extends CordovaPlugin {
         String password = "";
         String authType = "";
 
-        if (action.equals(ADD_NETWORK) ||
-            action.equals(CONNECT_NETWORK) ||
+        if (action.equals(CONNECT_NETWORK) ||
             action.equals(DISCONNECT_NETWORK)) {
 
             try {
@@ -123,9 +119,7 @@ public class AndroidWifi extends CordovaPlugin {
         }
 
         // Actions that DO require WiFi to be enabled
-        if (action.equals(ADD_NETWORK)) {
-            this.add(callbackContext, ssid, password, authType);
-        } else if (action.equals(CONNECT_NETWORK)) {
+        if (action.equals(CONNECT_NETWORK)) {
             this.connect(callbackContext, ssid, password, authType);
         } else if (action.equals(DISCONNECT_NETWORK)) {
             this.disconnectNetwork(callbackContext, ssid, password, authType);
@@ -136,149 +130,6 @@ public class AndroidWifi extends CordovaPlugin {
         return true;
     }
 
-    /**
-     * This methods adds a network to the list of available WiFi networks. If the network already
-     * exists, then it updates it.
-     *
-     * @return true    if add successful, false if add fails
-     * @params callbackContext     A Cordova callback context.
-     * @params data                JSON Array with [0] == SSID, [1] == password
-     */
-    private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
-       
-        Log.d(TAG, "add(" + ssid + "|" + authType + ")");
-
-        // Initialize the WifiConfiguration object
-        WifiConfiguration wifi = new WifiConfiguration();
-
-        try {
-
-            if (authType.equals("WPA2")) {
-                /**
-                 * WPA2 Data format:
-                 * 0: ssid
-                 * 1: auth
-                 * 2: password
-                 */
-                wifi.SSID = ssid;
-                wifi.preSharedKey = password;
-
-                wifi.status = WifiConfiguration.Status.ENABLED;
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-                wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-
-                wifi.networkId = ssidToNetworkId(ssid, authType);
-
-            } else if (authType.equals("WPA")) {
-                /**
-                 * WPA Data format:
-                 * 0: ssid
-                 * 1: auth
-                 * 2: password
-                 */
-                wifi.SSID = ssid;
-                wifi.preSharedKey = password;
-
-                wifi.status = WifiConfiguration.Status.ENABLED;
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
-                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-
-                wifi.networkId = ssidToNetworkId(ssid, authType);
-
-            } else if (authType.equals("WEP")) {
-                /**
-                 * WEP Data format:
-                 * 0: ssid
-                 * 1: auth
-                 * 2: password
-                 */
-                wifi.SSID = ssid;
-
-                if (getHexKey(password)) {
-                    wifi.wepKeys[0] = password;
-                } else {
-                    wifi.wepKeys[0] = "\"" + password + "\"";
-                }
-                wifi.wepTxKeyIndex = 0;
-
-                wifi.status = WifiConfiguration.Status.ENABLED;
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
-                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
-                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
-                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
-                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
-                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
-                wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
-                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
-
-                wifi.networkId = ssidToNetworkId(ssid, authType);
-
-            } else if (authType.equals("NONE")) {
-                /**
-                 * OPEN Network data format:
-                 * 0: ssid
-                 * 1: auth
-                 * 2: <not used>
-                 * 3: isHiddenSSID
-                 */
-                wifi.SSID = ssid;
-                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
-                wifi.networkId = ssidToNetworkId(ssid, authType);
-
-            } else {
-
-                callbackContext.error("AUTH_TYPE_NOT_SUPPORTED");
-                return false;
-
-            }
-            // Set network to highest priority (deprecated in API >= 26)
-            if( API_VERSION < 26 ){
-                wifi.priority = getMaxWifiPriority(wifiManager) + 1;
-            }
-
-            // After processing authentication types, add or update network
-            if (wifi.networkId == -1) { // -1 means SSID configuration does not exist yet
-
-                int newNetId = wifiManager.addNetwork(wifi);
-                Log.i(TAG, "NETID: " + newNetId);
-                if ( newNetId > -1 ){
-                    return true;
-                } else {
-                    callbackContext.error( "ERROR_ADDING_NETWORK" );
-                }
-
-            } else {
-
-                int updatedNetID = wifiManager.updateNetwork(wifi);
-
-                if( updatedNetID > -1 ){
-                    return true;
-                } else {
-                    callbackContext.error( "ERROR_UPDATING_NETWORK" );
-                }
-
-            }
-            return false;
-
-        } catch (Exception e) {
-            callbackContext.error(e.getMessage());
-            return false;
-        }
-    }
-
-
     public void connect(CallbackContext callbackContext, String ssid, String password, String authType) {
         Log.d(TAG, "connect entered.");
 
@@ -286,26 +137,22 @@ public class AndroidWifi extends CordovaPlugin {
 
         if (API_VERSION < 29) {
           
-            this.add(callbackContext, ssid, password, authType);
+            this.add(call, ssid, password, authType);
 
             int networkIdToConnect = ssidToNetworkId(ssid, authType);
 
             if (networkIdToConnect > -1) {
-
-                Log.d(TAG, "Valid networkIdToConnect: attempting connection");
-
-                registerBindALL(networkIdToConnect);
-
                 this.forceWifiUsage(false);
                 wifiManager.enableNetwork(networkIdToConnect, true);
                 this.forceWifiUsage(true);
 
                 // Wait for connection to finish, otherwise throw a timeout error
-                new ConnectAsync().execute(callbackContext, networkIdToConnect);
+                new ConnectAsync().execute(callbackContext, networkIdToConnect, this);
 
             } else {
-                callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
+                call.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
+
         } else { // API_VERSION >= 29 Android 10
             String connectedSSID = this.get_connectionInfo_SSID(callbackContext);
 
@@ -439,125 +286,6 @@ public class AndroidWifi extends CordovaPlugin {
         return false;
     }
 
-    /**
-   * Network Changed Broadcast Receiver
-   */
-  private class NetworkChangedReceiver extends BroadcastReceiver {
-
-    @Override
-    public void onReceive(final Context context, final Intent intent) {
-
-      if (WifiManager.NETWORK_STATE_CHANGED_ACTION.equals(intent.getAction())) {
-
-        Log.d(TAG, "NETWORK_STATE_CHANGED_ACTION");
-
-        NetworkInfo networkInfo = intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-        WifiInfo info = AndroidWifi.this.wifiManager.getConnectionInfo();
-
-        // Checks that you're connected to the desired network
-        if (networkInfo.isConnected() && info.getNetworkId() > -1) {
-
-          final String ssid = info.getSSID().replaceAll("\"", "");
-          final String bssid = info.getBSSID();
-
-          Log.d(TAG, "Connected to '" + ssid + "' @ " + bssid);
-
-          // Verify the desired network ID is what we actually connected to
-          if ( desired != null && info.getNetworkId() == desired.apId ) {
-            onSuccessfulConnection();
-          }
-
-        }
-
-      }
-
-    }
-
-  }
-
-
-      /**
-   * Register Receiver for Network Changed to handle BindALL
-   * @param netID
-   */
-  private void registerBindALL(int netID){
-
-    // Bind all requests to WiFi network (only necessary for Lollipop+ - API 21+)
-    if( API_VERSION > 21 ){
-      Log.d(TAG, "registerBindALL: registering net changed receiver");
-      desired = new AP(netID,null,null);
-      cordova.getActivity().getApplicationContext().registerReceiver(networkChangedReceiver, NETWORK_STATE_CHANGED_FILTER);
-    } else {
-      Log.d(TAG, "registerBindALL: API older than 21, bindall ignored.");
-    }
-  }
-
-  /**
-   * Called after successful connection to WiFi when using BindAll feature
-   *
-   * This method is called by the NetworkChangedReceiver after network changed action, and confirming that we are in fact connected to wifi,
-   * and the wifi we're connected to, is the correct network set in enable, or connect.
-   */
-  private void onSuccessfulConnection() {
-    // On Lollipop+ the OS routes network requests through mobile data
-    // when phone is attached to a wifi that doesn't have Internet connection
-    // We use the ConnectivityManager to force bind all requests from our process
-    // to the wifi without internet
-    // see https://android-developers.googleblog.com/2016/07/connecting-your-app-to-wi-fi-device.html
-
-    // Marshmallow OS or newer
-    if ( API_VERSION >= 23 ) {
-
-      Log.d(TAG, "BindALL onSuccessfulConnection API >= 23");
-
-      // Marshmallow (API 23+) or newer uses bindProcessToNetwork
-      final NetworkRequest request = new NetworkRequest.Builder()
-          .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-//          .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-          .build();
-
-      networkCallback = new ConnectivityManager.NetworkCallback() {
-        @Override
-        public void onAvailable(Network network) {
-          if( connectivityManager.bindProcessToNetwork(network) ){
-            Log.d(TAG, "bindProcessToNetwork TRUE onSuccessfulConnection");
-          } else {
-            Log.d(TAG, "bindProcessToNetwork FALSE onSuccessfulConnection");
-          }
-        }
-      };
-
-      connectivityManager.requestNetwork(request, networkCallback);
-
-      // Only lollipop (API 21 && 22) use setProcessDefaultNetwork, API < 21 already does this by default
-    } else if( API_VERSION >= 21 && API_VERSION < 23 ){
-
-      Log.d(TAG, "BindALL onSuccessfulConnection API >= 21 && < 23");
-
-      // Lollipop (API 21-22) use setProcessDefaultNetwork (deprecated in API 23 - Marshmallow)
-      final NetworkRequest request = new NetworkRequest.Builder()
-          .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-//          .removeCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-          .build();
-
-      networkCallback = new ConnectivityManager.NetworkCallback() {
-        @Override
-        public void onAvailable(Network network) {
-          connectivityManager.setProcessDefaultNetwork(network);
-        }
-      };
-
-      connectivityManager.requestNetwork(request, networkCallback);
-
-    } else {
-      // Technically we should never reach this with older API, but just in case
-      Log.d(TAG, "BindALL onSuccessfulConnection API older than 21, no need to do any binding");
-      networkCallback = null;
-      previous = null;
-      desired = null;
-
-    }
-  }
 
     /**
      * This method retrieves the SSID for the currently connected network
@@ -756,74 +484,16 @@ public class AndroidWifi extends CordovaPlugin {
 
     }
 
-    public void forceWifiUsage(boolean useWifi) {
-        boolean canWriteFlag = false;
-
-        if (useWifi) {
-            if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    canWriteFlag = true;
-                    // Only need ACTION_MANAGE_WRITE_SETTINGS on 6.0.0, regular permissions suffice on later versions
-                } else if (Build.VERSION.RELEASE.toString().equals("6.0.1")) {
-                    canWriteFlag = true;
-                    // Don't need ACTION_MANAGE_WRITE_SETTINGS on 6.0.1, if we can positively identify it treat like 7+
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    canWriteFlag = true;
-                    // // On M 6.0.0 (N+ or higher and 6.0.1 hit above), we need ACTION_MANAGE_WRITE_SETTINGS to forceWifi.
-                    // canWriteFlag = Settings.System.canWrite(this.context);
-                    // if (!canWriteFlag) {
-                    //     Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                    //     intent.setData(Uri.parse("package:" + this.context.getPackageName()));
-                    //     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                    //     this.context.startActivity(intent);
-                    // }
-                }
-
-                if (((API_VERSION>= Build.VERSION_CODES.M) && canWriteFlag) || ((API_VERSION >= Build.VERSION_CODES.LOLLIPOP) && !(API_VERSION >= Build.VERSION_CODES.M))) {
-                    final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
-                            //.getSystemService(Context.CONNECTIVITY_SERVICE);
-                    NetworkRequest networkRequest = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();
-                    manager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                        @Override
-                        public void onAvailable(Network network) {
-                            if (API_VERSION >= Build.VERSION_CODES.M) {
-                                manager.bindProcessToNetwork(network);
-                            } else {
-                                //This method was deprecated in API level 23
-                                ConnectivityManager.setProcessDefaultNetwork(network);
-                            }
-                            try {
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            manager.unregisterNetworkCallback(this);
-                        }
-                    });
-                }
-            }
-        } else {
-            if (API_VERSION >= Build.VERSION_CODES.M) {
-                ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
-                        //.getSystemService(Context.CONNECTIVITY_SERVICE);
-                manager.bindProcessToNetwork(null);
-            } else if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
-                ConnectivityManager.setProcessDefaultNetwork(null);
-            }
-        }
-    }
-
-      /**
-   * Wait for connection before returning error or success
-   *
-   * This method will wait up to 60 seconds for WiFi connection to specified network ID be in COMPLETED state, otherwise will return error.
-   *
-   * @param callbackContext
-   * @param networkIdToConnect
-   * @return
-   */
-  private class ConnectAsync extends AsyncTask<Object, Void, String[]> {
+    /**
+     * Wait for connection before returning error or success
+     *
+     * This method will wait up to 60 seconds for WiFi connection to specified network ID be in COMPLETED state, otherwise will return error.
+     *
+     * @param callbackContext
+     * @param networkIdToConnect
+     * @return
+     */
+        private class ConnectAsync extends AsyncTask<Object, Void, String[]> {
     CallbackContext callbackContext;
     @Override
     protected void onPostExecute(String[] results) {
@@ -878,25 +548,6 @@ public class AndroidWifi extends CordovaPlugin {
   }
 
 
-    private static int getMaxWifiPriority(final WifiManager wifiManager) {
-        final List<WifiConfiguration> configurations = wifiManager.getConfiguredNetworks();
-        int maxPriority = 0;
-        for (WifiConfiguration config : configurations) {
-            if (config.priority > maxPriority) {
-                maxPriority = config.priority;
-            }
-        }
-
-        return maxPriority;
-    }
-
-    private String strip(String input){
-        String output = input;
-        if (input.startsWith("\"") && input.endsWith("\"")) {
-            output = input.substring(1, input.length() - 1);
-        }
-        return output;
-    }
 
     static public String getSecurityType(WifiConfiguration wifiConfig) {
 
@@ -925,18 +576,223 @@ public class AndroidWifi extends CordovaPlugin {
         }
     }
 
-    /**
-   * Used for storing access point information
-   */
-  private static class AP {
-    final String ssid, bssid;
-    final int apId;
 
-    AP(int apId, final String ssid, final String bssid) {
-      this.apId = apId;
-      this.ssid = ssid;
-      this.bssid = bssid;
+    /*************************************************
+     *  
+     *    API_VERSION < 29
+     * 
+     *************************************************/
+
+    /**
+     * Figure out what the highest priority network in the network list is and return that priority
+     */
+    private static int getMaxWifiPriority(final WifiManager wifiManager) {
+        final List<WifiConfiguration> configurations = wifiManager.getConfiguredNetworks();
+        int maxPriority = 0;
+        for (WifiConfiguration config : configurations) {
+            if (config.priority > maxPriority) {
+                maxPriority = config.priority;
+            }
+        }
+
+        return maxPriority;
     }
 
-  }
+    /**
+     * This methods adds a network to the list of available WiFi networks. If the network already
+     * exists, then it updates it.
+     *
+     * @return true    if add successful, false if add fails
+     * @params callbackContext     A Cordova callback context.
+     * @params data                JSON Array with [0] == SSID, [1] == password
+     */
+    private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
+       
+        Log.d(TAG, "add(" + ssid + "|" + authType + ")");
+
+        // Initialize the WifiConfiguration object
+        WifiConfiguration wifi = new WifiConfiguration();
+
+        try {
+
+            if (authType.equals("WPA2")) {
+                /**
+                 * WPA2 Data format:
+                 * 0: ssid
+                 * 1: auth
+                 * 2: password
+                 */
+                wifi.SSID = ssid;
+                wifi.preSharedKey = password;
+
+                wifi.status = WifiConfiguration.Status.ENABLED;
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+
+                wifi.networkId = ssidToNetworkId(ssid, authType);
+
+            } else if (authType.equals("WPA")) {
+                /**
+                 * WPA Data format:
+                 * 0: ssid
+                 * 1: auth
+                 * 2: password
+                 */
+                wifi.SSID = ssid;
+                wifi.preSharedKey = password;
+
+                wifi.status = WifiConfiguration.Status.ENABLED;
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.WPA_PSK);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+
+                wifi.networkId = ssidToNetworkId(ssid, authType);
+
+            } else if (authType.equals("WEP")) {
+                /**
+                 * WEP Data format:
+                 * 0: ssid
+                 * 1: auth
+                 * 2: password
+                 */
+                wifi.SSID = ssid;
+
+                if (getHexKey(password)) {
+                    wifi.wepKeys[0] = password;
+                } else {
+                    wifi.wepKeys[0] = "\"" + password + "\"";
+                }
+                wifi.wepTxKeyIndex = 0;
+
+                wifi.status = WifiConfiguration.Status.ENABLED;
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP40);
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.WEP104);
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.TKIP);
+                wifi.allowedGroupCiphers.set(WifiConfiguration.GroupCipher.CCMP);
+                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.OPEN);
+                wifi.allowedAuthAlgorithms.set(WifiConfiguration.AuthAlgorithm.SHARED);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.TKIP);
+                wifi.allowedPairwiseCiphers.set(WifiConfiguration.PairwiseCipher.CCMP);
+                wifi.allowedProtocols.set(WifiConfiguration.Protocol.RSN);
+                wifi.allowedProtocols.set(WifiConfiguration.Protocol.WPA);
+
+                wifi.networkId = ssidToNetworkId(ssid, authType);
+
+            } else if (authType.equals("NONE")) {
+                /**
+                 * OPEN Network data format:
+                 * 0: ssid
+                 * 1: auth
+                 * 2: <not used>
+                 * 3: isHiddenSSID
+                 */
+                wifi.SSID = ssid;
+                wifi.allowedKeyManagement.set(WifiConfiguration.KeyMgmt.NONE);
+                wifi.networkId = ssidToNetworkId(ssid, authType);
+
+            } else {
+
+                callbackContext.error("AUTH_TYPE_NOT_SUPPORTED");
+                return false;
+
+            }
+            // Set network to highest priority (deprecated in API >= 26)
+            if( API_VERSION < 26 ){
+                wifi.priority = getMaxWifiPriority(wifiManager) + 1;
+            }
+
+            // After processing authentication types, add or update network
+            if (wifi.networkId == -1) { // -1 means SSID configuration does not exist yet
+
+                int newNetId = wifiManager.addNetwork(wifi);
+                Log.i(TAG, "NETID: " + newNetId);
+                if ( newNetId > -1 ){
+                    return true;
+                } else {
+                    callbackContext.error( "ERROR_ADDING_NETWORK" );
+                }
+
+            } else {
+
+                int updatedNetID = wifiManager.updateNetwork(wifi);
+
+                if( updatedNetID > -1 ){
+                    return true;
+                } else {
+                    callbackContext.error( "ERROR_UPDATING_NETWORK" );
+                }
+
+            }
+            return false;
+
+        } catch (Exception e) {
+            callbackContext.error(e.getMessage());
+            return false;
+        }
+    }
+
+    public void forceWifiUsage(boolean useWifi) {
+        boolean canWriteFlag = false;
+
+        final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
+
+        if (useWifi) {
+            if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    canWriteFlag = true;
+                    // Only need ACTION_MANAGE_WRITE_SETTINGS on 6.0.0, regular permissions suffice on later versions
+                } else if (Build.VERSION.RELEASE.toString().equals("6.0.1")) {
+                    canWriteFlag = true;
+                    // Don't need ACTION_MANAGE_WRITE_SETTINGS on 6.0.1, if we can positively identify it treat like 7+
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    canWriteFlag = true;
+                    // // On M 6.0.0 (N+ or higher and 6.0.1 hit above), we need ACTION_MANAGE_WRITE_SETTINGS to forceWifi.
+                    // canWriteFlag = Settings.System.canWrite(this.context);
+                    // if (!canWriteFlag) {
+                    //     Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                    //     intent.setData(Uri.parse("package:" + this.context.getPackageName()));
+                    //     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+                    //     this.context.startActivity(intent);
+                    // }
+                }
+
+                if (((API_VERSION>= Build.VERSION_CODES.M) && canWriteFlag) || ((API_VERSION >= Build.VERSION_CODES.LOLLIPOP) && !(API_VERSION >= Build.VERSION_CODES.M))) {
+                    NetworkRequest networkRequest = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();
+                    manager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
+                        @Override
+                        public void onAvailable(Network network) {
+                            if (API_VERSION >= Build.VERSION_CODES.M) {
+                                manager.bindProcessToNetwork(network);
+                            } else {
+                                //This method was deprecated in API level 23
+                                ConnectivityManager.setProcessDefaultNetwork(network);
+                            }
+                            try {
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            manager.unregisterNetworkCallback(this);
+                        }
+                    });
+                }
+            }
+        } else {
+            if (API_VERSION >= Build.VERSION_CODES.M) {
+                manager.bindProcessToNetwork(null);
+            } else if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
+                ConnectivityManager.setProcessDefaultNetwork(null);
+            }
+        }
+    }
 }
