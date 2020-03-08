@@ -501,9 +501,8 @@ public class AndroidWifi extends CordovaPlugin {
      * This method takes a given String, searches the current list of configured WiFi networks, and
      * returns the networkId for the network if the SSID matches. If not, it returns -1.
      */
-    private int ssidToNetworkId(String ssid, String _authType) {
-        String authType = "WPA2";
-        int networkId = -1;
+    private int ssidToNetworkId(String ssid, String authType) {
+        
         try {
 
             int maybeNetId = Integer.parseInt(ssid);
@@ -511,7 +510,31 @@ public class AndroidWifi extends CordovaPlugin {
 
         } catch (NumberFormatException e) {
     
+            List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
+            int networkId = -1;
 
+            // For each network in the list, compare the SSID with the given one
+            for (WifiConfiguration test : currentNetworks) {
+              if (test.SSID != null && test.SSID.equals(ssid)) {
+                networkId = test.networkId;
+                Log.i(TAG, "networkId: " + networkId);
+                return networkId;
+              }
+            }
+
+            Log.i(TAG, "networkId: " + networkId);
+            return networkId;
+        }
+    }
+    /*
+    private int ssidToNetworkId(String ssid, String authType) {
+        
+        try {
+
+            int maybeNetId = Integer.parseInt(ssid);
+            return maybeNetId;
+
+        } catch (NumberFormatException e) {  
             List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
             
             // For each network in the list, compare the SSID with the given one and check if authType matches
@@ -554,6 +577,7 @@ public class AndroidWifi extends CordovaPlugin {
         Log.i(TAG, "networkId: " + networkId);
         return networkId;
     }
+    */
     
     public void forceWifiUsageQ(CallbackContext callbackContext, String ssid, boolean useWifi, NetworkRequest networkRequest) {
 
