@@ -300,7 +300,7 @@ public class AndroidWifi extends CordovaPlugin {
         } else { // API_VERSION >= 29 Android 10
             String connectedSSID = this.get_connectionInfo_SSID(callbackContext);
 
-            Log.i(TAG, "ssid.equals(connectedSSID): " + ssid + "|" + connectedSSID);
+            Log.d(TAG, "ssid.equals(connectedSSID): " + ssid + "|" + connectedSSID);
 
             if (!ssid.equals(connectedSSID)) 
             {
