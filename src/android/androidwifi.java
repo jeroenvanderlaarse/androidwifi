@@ -49,6 +49,9 @@ public class AndroidWifi extends CordovaPlugin {
     private WifiManager wifiManager;
     private CallbackContext callbackContext;
 
+    // Store AP, previous, and desired wifi info
+    private AP previous, desired;
+
     private static final IntentFilter NETWORK_STATE_CHANGED_FILTER = new IntentFilter();
 
     static {
@@ -287,6 +290,11 @@ public class AndroidWifi extends CordovaPlugin {
             int networkIdToConnect = ssidToNetworkId(ssid, authType);
 
             if (networkIdToConnect > -1) {
+
+                Log.d(TAG, "Valid networkIdToConnect: attempting connection");
+
+                registerBindALL(networkIdToConnect);
+
                 this.forceWifiUsage(false);
                 wifiManager.enableNetwork(networkIdToConnect, true);
                 this.forceWifiUsage(true);
@@ -429,6 +437,22 @@ public class AndroidWifi extends CordovaPlugin {
         }
         return false;
     }
+
+      /**
+   * Register Receiver for Network Changed to handle BindALL
+   * @param netID
+   */
+  private void registerBindALL(int netID){
+
+    // Bind all requests to WiFi network (only necessary for Lollipop+ - API 21+)
+    if( API_VERSION > 21 ){
+      Log.d(TAG, "registerBindALL: registering net changed receiver");
+      desired = new AP(netID,null,null);
+      cordova.getActivity().getApplicationContext().registerReceiver(networkChangedReceiver, NETWORK_STATE_CHANGED_FILTER);
+    } else {
+      Log.d(TAG, "registerBindALL: API older than 21, bindall ignored.");
+    }
+  }
 
     /**
      * This method retrieves the SSID for the currently connected network
@@ -795,4 +819,19 @@ public class AndroidWifi extends CordovaPlugin {
             return "NONE";
         }
     }
+
+    /**
+   * Used for storing access point information
+   */
+  private static class AP {
+    final String ssid, bssid;
+    final int apId;
+
+    AP(int apId, final String ssid, final String bssid) {
+      this.apId = apId;
+      this.ssid = ssid;
+      this.bssid = bssid;
+    }
+
+  }
 }
