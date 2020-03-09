@@ -439,8 +439,18 @@ public class AndroidWifi extends CordovaPlugin {
     public void forceWifiUsageQ(CallbackContext callbackContext, String ssid, boolean useWifi, NetworkRequest networkRequest) {
 
         if (API_VERSION >= 29) {
+
+            Log.i(TAG, "forceWifiUsageQ() " + ssid);
+
             if (useWifi) {
-                final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
+                
+                Log.i(TAG, "forceWifiUsageQ() useWifi");
+
+                //final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
+                final ConnectivityManager manager = (ConnectivityManager) this.context
+                        .getSystemService(Context.CONNECTIVITY_SERVICE);
+
+                Log.i(TAG, "forceWifiUsageQ() manager");
                     
                 if (networkRequest == null) {
                     networkRequest = new NetworkRequest.Builder()
@@ -471,14 +481,14 @@ public class AndroidWifi extends CordovaPlugin {
                 });
 
             } else {
-                // ConnectivityManager manager = (ConnectivityManager) this.connectivityManager
-                //     .getSystemService(Context.CONNECTIVITY_SERVICE);
+                ConnectivityManager manager = (ConnectivityManager) this.connectivityManager
+                    .getSystemService(Context.CONNECTIVITY_SERVICE);
 
-                // if (this.networkCallback != null) {
-                //     manager.unregisterNetworkCallback(this.networkCallback);
-                //     this.networkCallback = null;
-                // }
-                // manager.bindProcessToNetwork(null);
+                if (this.networkCallback != null) {
+                    manager.unregisterNetworkCallback(this.networkCallback);
+                    this.networkCallback = null;
+                }
+                manager.bindProcessToNetwork(null);
             }
         }
 
