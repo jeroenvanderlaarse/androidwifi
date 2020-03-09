@@ -199,7 +199,9 @@ public class AndroidWifi extends CordovaPlugin {
         
         Log.d(TAG, "AndroidWifi: disconnectNetwork entered.");
 
-        int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect, authType);
+        int networkIdToDisconnect = get_connectionInfo_networkId(callbackContext);
+
+        //int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect, authType);
 
         if (networkIdToDisconnect > 0) {
 
@@ -567,6 +569,29 @@ public class AndroidWifi extends CordovaPlugin {
         } else {
             return "NONE";
         }
+    }
+
+    private int get_connectionInfo_networkId(CallbackContext callbackContext) {
+
+        Log.i(TAG, "get_connectionInfo_networkId enter");
+        
+        WifiInfo info = wifiManager.getConnectionInfo();
+
+        if (info == null) {
+            callbackContext.error("UNABLE_TO_READ_WIFI_INFO");
+            return -1;
+        }
+
+        // Only return SSID when actually connected to a network
+        SupplicantState state = info.getSupplicantState();
+        if (!state.equals(SupplicantState.COMPLETED)) {
+            callbackContext.error("CONNECTION_NOT_COMPLETED");
+            return -1;
+        }
+
+        Log.i(TAG, "get_connectionInfo_networkId networkId: " + info.getNetworkId());
+
+        return info.getNetworkId();
     }
 
     /*************************************************
