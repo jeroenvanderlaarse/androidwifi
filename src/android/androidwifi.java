@@ -124,7 +124,7 @@ public class AndroidWifi extends CordovaPlugin {
         } else if (action.equals(CONNECT_NETWORK)) {
             this.connect(callbackContext, ssid, password, authType);
         } else if (action.equals(DISCONNECT_NETWORK)) {
-            this.disconnectNetwork(callbackContext, ssid, authType);
+            this.disconnectNetwork(callbackContext, ssid, password, authType);
         }  else if (action.equals(GET_CONNECTED_SSID)) {
             this.getConnectedSSID(callbackContext);
         } 
@@ -297,7 +297,9 @@ public class AndroidWifi extends CordovaPlugin {
             } else {
                 callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
+
         } else {
+
             String connectedSSID = this.getConnectedSSID(callbackContext);
 
             if (!ssid.equals(connectedSSID)) 
@@ -321,6 +323,7 @@ public class AndroidWifi extends CordovaPlugin {
             } else {
                 this.getConnectedSSID(callbackContext);
             }
+
         }
     }
 
@@ -332,7 +335,7 @@ public class AndroidWifi extends CordovaPlugin {
      * @param data JSON Array, with [0] being SSID to connect
      * @return true if network disconnected, false if failed
      */
-    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String authType) {
+    private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String password, String authType) {
         
         Log.d(TAG, "AndroidWifi: disconnectNetwork entered.");
 
