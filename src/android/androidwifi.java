@@ -140,7 +140,7 @@ public class AndroidWifi extends CordovaPlugin {
      */
     private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
        
-        Log.d(TAG, "AndroidWifi add(" + ssid + "|" + authType ")");
+        Log.d(TAG, "AndroidWifi add(" + ssid + "|" + authType + ")" );
 
         // Initialize the WifiConfiguration object
         WifiConfiguration wifi = new WifiConfiguration();
