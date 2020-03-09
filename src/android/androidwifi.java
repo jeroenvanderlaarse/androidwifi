@@ -356,13 +356,20 @@ public class AndroidWifi extends CordovaPlugin {
         int networkId = -1;
             
         List<WifiConfiguration> currentNetworks = wifiManager.getConfiguredNetworks();
+
+        Log.d(TAG, "List<WifiConfig>", "configurations is: " + currentNetworks); //error thrown here
+    
+        if (currentNetworks != null){
+            Log.i(TAG, "Number of networks: " + currentNetworks.length);
+        }
+        
         // For each network in the list, compare the SSID with the given one
         for (WifiConfiguration network : currentNetworks) {
             Log.i(TAG, "network: " + network.SSID + "|" + networkId);
             if (network.SSID != null && network.SSID.equals(ssidComp)) {
-            networkId = network.networkId;
-            Log.i(TAG, "networkId: " + networkId);
-            return networkId;
+                networkId = network.networkId;
+                Log.i(TAG, "networkId: " + networkId);
+                return networkId;
             }
         }
 
