@@ -207,27 +207,38 @@ public class AndroidWifi extends CordovaPlugin {
 
             if (API_VERSION >= 29) {
 
-                WifiNetworkSuggestion networkSuggestion1 =
-                new WifiNetworkSuggestion.Builder()
-                        .setSsid(ssidToDisconnect)
-                        .setWpa2Passphrase(password)
-                        .build();
+//                 WifiNetworkSuggestion networkSuggestion1 =
+//                 new WifiNetworkSuggestion.Builder()
+//                         .setSsid(ssidToDisconnect)
+//                         .setWpa2Passphrase(password)
+//                         .build();
 
-                List<WifiNetworkSuggestion> suggestionsList = new ArrayList<>();
-                suggestionsList.add(networkSuggestion1);
+//                 List<WifiNetworkSuggestion> suggestionsList = new ArrayList<>();
+//                 suggestionsList.add(networkSuggestion1);
 
-                int result = wifiManager.removeNetworkSuggestions(suggestionsList);
+//                 int result = wifiManager.removeNetworkSuggestions(suggestionsList);
 
-                if (result == wifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
+//                 if (result == wifiManager.STATUS_NETWORK_SUGGESTIONS_SUCCESS) {
                 
-                    callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
+//                     callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
 
-                } else {
-                    callbackContext.error("DISCONNECT_NET_REMOVE_ERROR rc=" + result);
-                    Log.d(TAG, "Unable to remove network!");
-                    return false;
-                }
-                return true;
+//                 } else {
+
+//                     String err_desc;
+// if (result == 5){
+//     err_desc = "Reason code if one or more of the network suggestions removed does not exist in platform's database.";
+// }
+
+
+//                     callbackContext.error("DISCONNECT_NET_REMOVE_ERROR rc=" + result + "(" + err_desc + ")" );
+//                     Log.d(TAG, "Unable to remove network!");
+//                     return false;
+//                 }
+//                 return true;
+
+                    connectivityManager.unregisterNetworkCallback(networkCallback);
+                    callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
+                    return true;
 
             }
             else
