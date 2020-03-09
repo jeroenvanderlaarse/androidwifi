@@ -336,7 +336,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         String ssidComp = "\"" + ssid + "\"";
 
-        if (ssid.startsWith("\"") {
+        if (ssid.startsWith("\"")) {
             ssidComp = ssid;
         }
 
