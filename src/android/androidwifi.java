@@ -431,6 +431,9 @@ public class AndroidWifi extends CordovaPlugin {
                         manager.bindProcessToNetwork(network);
                         String currentSSID = AndroidWifi.this.getConnectedSSID(callbackContext);
 
+                        Log.i(TAG, "currentSSID: " + currentSSID);
+                        Log.i(TAG, "ssid: " + ssid);
+
                         if (currentSSID.equals(ssid)) {
                             //AndroidWifi.this.getConnectedSSID(callbackContext);
                             callbackContext.success("connected to " + currentSSID);
