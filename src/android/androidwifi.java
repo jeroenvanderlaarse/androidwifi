@@ -434,7 +434,7 @@ public class AndroidWifi extends CordovaPlugin {
                         Log.i(TAG, "currentSSID: " + currentSSID);
                         Log.i(TAG, "ssid: " + ssid);
 
-                        if (currentSSID === "<unknown ssid>"){
+                        if (currentSSID == "<unknown ssid>"){
                             callbackContext.success("connected to " + currentSSID);
                         }
                         else {
