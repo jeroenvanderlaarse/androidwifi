@@ -276,10 +276,10 @@ public class AndroidWifi extends CordovaPlugin {
     
         Log.d(TAG, "getConnectedSSID");
 
-        if (networkCallback == null){
-            callbackContext.error("CONNECTION_NOT_COMPLETED");
-            return null;
-        }
+        // if (networkCallback == null){
+        //     callbackContext.error("CONNECTION_NOT_COMPLETED");
+        //     return null;
+        // }
 
         WifiInfo info = wifiManager.getConnectionInfo();
 
