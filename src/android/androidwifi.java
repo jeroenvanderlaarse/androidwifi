@@ -91,12 +91,6 @@ public class AndroidWifi extends CordovaPlugin {
 
         this.callbackContext = callbackContext;
 
-        if (!validateData(data)) {
-            callbackContext.error("CONNECT_INVALID_DATA");
-            Log.d(TAG, "AndroidWifi: " + action + " invalid data.");
-            return false;
-        }
-
         String ssid = "";
         String password = "";
         String authType = "";
@@ -104,6 +98,12 @@ public class AndroidWifi extends CordovaPlugin {
         if (action.equals(ADD_NETWORK) ||
             action.equals(CONNECT_NETWORK) ||
             action.equals(DISCONNECT_NETWORK)) {
+
+            if (!validateData(data)) {
+                callbackContext.error("CONNECT_INVALID_DATA");
+                Log.d(TAG, "AndroidWifi: " + action + " invalid data.");
+                return false;
+            }
 
             try {
                 ssid = data.getString(0);
@@ -431,12 +431,21 @@ public class AndroidWifi extends CordovaPlugin {
                         manager.bindProcessToNetwork(network);
                         String currentSSID = AndroidWifi.this.getConnectedSSID(callbackContext);
 
-                        if (currentSSID.equals(ssid)) {
-                            //AndroidWifi.this.getConnectedSSID(callbackContext);
+                        Log.i(TAG, "currentSSID: " + currentSSID);
+                        Log.i(TAG, "ssid: " + ssid);
+
+                        if (currentSSID == "<unknown ssid>"){
                             callbackContext.success("connected to " + currentSSID);
-                        } else {
-                            callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
                         }
+                        else {
+                            if (currentSSID.equals(ssid)) {
+                                //AndroidWifi.this.getConnectedSSID(callbackContext);
+                                callbackContext.success("connected to " + currentSSID);
+                            } else {
+                                callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
+                            }
+                        }
+                        
                         AndroidWifi.this.networkCallback = this;
                     }
                     @Override
