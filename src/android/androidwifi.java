@@ -43,7 +43,7 @@ public class AndroidWifi extends CordovaPlugin {
     private static final String DISCONNECT_NETWORK = "disconnectNetwork";
     private static final String GET_CONNECTED_SSID = "getConnectedSSID";
     
-    private ConnectivityManager.NetworkCallback networkCallback;
+    private ConnectivityManager.NetworkCallback networkCallback = null;
     private ConnectivityManager connectivityManager;
     private WifiManager wifiManager;
     private CallbackContext callbackContext;
@@ -139,25 +139,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         Log.d(TAG, "AndroidWifi: API_VERSION=" + API_VERSION);
 
-        if (API_VERSION < 29) {
-          
-            this.add(callbackContext, ssid, password, authType);
-
-            int networkIdToConnect = ssidToNetworkId(ssid, authType);
-
-            if (networkIdToConnect > -1) {
-                this.forceWifiUsage(false);
-                wifiManager.enableNetwork(networkIdToConnect, true);
-                this.forceWifiUsage(true);
-
-                // Wait for connection to finish, otherwise throw a timeout error
-                new ConnectAsync().execute(callbackContext, networkIdToConnect);
-
-            } else {
-                callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
-            }
-
-        } else {
+        if (API_VERSION >= 29) {
 
             String connectedSSID = this.getConnectedSSID(callbackContext);
 
@@ -181,6 +163,24 @@ public class AndroidWifi extends CordovaPlugin {
                 this.forceWifiUsageQ(callbackContext, ssid, true, networkRequest);
             } else {
                 this.getConnectedSSID(callbackContext);
+            }
+
+        } else {
+
+            this.add(callbackContext, ssid, password, authType);
+
+            int networkIdToConnect = ssidToNetworkId(ssid, authType);
+
+            if (networkIdToConnect > -1) {
+                this.forceWifiUsage(false);
+                wifiManager.enableNetwork(networkIdToConnect, true);
+                this.forceWifiUsage(true);
+
+                // Wait for connection to finish, otherwise throw a timeout error
+                new ConnectAsync().execute(callbackContext, networkIdToConnect);
+
+            } else {
+                callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
             }
 
         }
@@ -207,6 +207,7 @@ public class AndroidWifi extends CordovaPlugin {
             if (API_VERSION >= 29) {
 
                     connectivityManager.unregisterNetworkCallback(networkCallback);
+                    networkCallback = null;
                     callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
                     return true;
 
@@ -275,6 +276,11 @@ public class AndroidWifi extends CordovaPlugin {
     
         Log.d(TAG, "getConnectedSSID");
 
+        if (networkCallback == null){
+            callbackContext.error("CONNECTION_NOT_COMPLETED");
+            return null;
+        }
+
         WifiInfo info = wifiManager.getConnectionInfo();
 
         if (info == null) {
@@ -289,26 +295,23 @@ public class AndroidWifi extends CordovaPlugin {
             return null;
         }
 
-        Log.d(TAG, "getConnectedSSID() => info.getSSID()");
+        String ssid = info.getSSID();
 
-        String serviceInfo;
-        serviceInfo = info.getSSID();
+        Log.d(TAG, "ssid=" + ssid);
 
-        Log.d(TAG, "serviceInfo=" + serviceInfo);
-
-        if (serviceInfo == null || serviceInfo.isEmpty() || serviceInfo == "0x") {
+        if (ssid == null || ssid.isEmpty() || ssid == "0x") {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
             return null;
         }
 
         // http://developer.android.com/reference/android/net/wifi/WifiInfo.html#getSSID()
-        if (serviceInfo.startsWith("\"") && serviceInfo.endsWith("\"")) {
-            serviceInfo = serviceInfo.substring(1, serviceInfo.length() - 1);
+        if (ssid.startsWith("\"") && ssid.endsWith("\"")) {
+            ssid = ssid.substring(1, ssid.length() - 1);
         }
 
-        Log.d(TAG, "stripped serviceInfo=" + serviceInfo);
+        Log.d(TAG, "stripped ssid=" + ssid);
 
-        return serviceInfo;
+        return ssid;
     }
 
       /**
@@ -439,7 +442,6 @@ public class AndroidWifi extends CordovaPlugin {
                         }
                         else {
                             if (currentSSID.equals(ssid)) {
-                                //AndroidWifi.this.getConnectedSSID(callbackContext);
                                 callbackContext.success("connected to " + currentSSID);
                             } else {
                                 callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
