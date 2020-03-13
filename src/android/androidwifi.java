@@ -208,8 +208,9 @@ public class AndroidWifi extends CordovaPlugin {
             if (API_VERSION >= 29) {
 
                 try {
-                    connectivityManager.bindProcesstoNetwork(null);
-                    connectivityManager.unregisterNetworkCallback(networkCallback);
+                    ConnectivityManager manager = (ConnectivityManager) this.connectivityManager.getSystemService(Context.CONNECTIVITY_SERVICE);
+                    manager.bindProcessToNetwork(null);
+                    manager.unregisterNetworkCallback(networkCallback);
                     networkCallback = null;
                     callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
                 }
