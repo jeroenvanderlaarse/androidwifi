@@ -207,20 +207,26 @@ public class AndroidWifi extends CordovaPlugin {
 
             if (API_VERSION >= 29) {
 
+                try {
+                    wifiManager.bindProcesstoNetwork(null);
                     connectivityManager.unregisterNetworkCallback(networkCallback);
                     networkCallback = null;
                     callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
-                    
-                    try {
+                }
+                catch (IllegalArgumentException exception){
+                }
+/*
+                cordova.getThreadPool().execute(new Runnable() {
+                    public void run() {
                         Thread.sleep(5000);
-                      } catch (InterruptedException e) {
-                        Log.e(TAG, e.getMessage());
-                        return true;
-                      }
-                    
-                    Network net = connectivityManager.getActiveNetwork ();
-                    connectivityManager.bindProcessToNetwork(net);
-                    return true;
+                        Network net = connectivityManager.getActiveNetwork ();
+                        connectivityManager.bindProcessToNetwork(net);
+                        callbackContext.success(); // Thread-safe.
+                    }
+                });
+*/
+                
+                return true;
 
             }
             else
@@ -463,6 +469,9 @@ public class AndroidWifi extends CordovaPlugin {
                     }
                     @Override
                     public void onUnavailable() {
+                        //base.OnUnavailable();
+
+                        //NetworkUnavailable?.Invoke();
                         callbackContext.error("CONNECTION_FAILED");
                     }
                 });
