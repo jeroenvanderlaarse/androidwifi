@@ -32,7 +32,6 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 
 public class AndroidWifi extends CordovaPlugin {
@@ -212,7 +211,13 @@ public class AndroidWifi extends CordovaPlugin {
                     networkCallback = null;
                     callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
                     
-                    TimeUnit.SECONDS.sleep(5);
+                    try {
+                        Thread.sleep(5000);
+                      } catch (InterruptedException e) {
+                        Log.e(TAG, e.getMessage());
+                        return true;
+                      }
+                    
                     Network net = connectivityManager.getActiveNetwork ();
                     connectivityManager.bindProcessToNetwork(net);
                     return true;
