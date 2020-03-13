@@ -168,21 +168,8 @@ public class AndroidWifi extends CordovaPlugin {
 
         } else {
 
-            this.add(callbackContext, ssid, password, authType);
-
-            int networkIdToConnect = ssidToNetworkId(ssid, authType);
-
-            if (networkIdToConnect > -1) {
-                this.forceWifiUsage(false);
-                wifiManager.enableNetwork(networkIdToConnect, true);
-                this.forceWifiUsage(true);
-
-                // Wait for connection to finish, otherwise throw a timeout error
-                new ConnectAsync().execute(callbackContext, networkIdToConnect);
-
-            } else {
-                callbackContext.error("INVALID_NETWORK_ID_TO_CONNECT");
-            }
+            callbackContext.error("API_VERSION_BELOW_29_NOT_SUPPORTED");
+        
 
         }
     }
@@ -207,16 +194,8 @@ public class AndroidWifi extends CordovaPlugin {
 
             if (API_VERSION >= 29) {
 
-                try {
-                    ConnectivityManager manager = (ConnectivityManager) this.connectivityManager.getSystemService(Context.CONNECTIVITY_SERVICE);
-                    manager.bindProcessToNetwork(null);
-                    manager.unregisterNetworkCallback(networkCallback);
-                    networkCallback = null;
-                    callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
-                }
-                catch (IllegalArgumentException exception){
-                }
-                
+                maybeResetBindALL();
+                callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
                 return true;
 
             }
@@ -480,6 +459,33 @@ public class AndroidWifi extends CordovaPlugin {
         }
 
     }
+
+    /**
+   * Maybe reset bind all after disconnect/disable
+   *
+   * This method unregisters the network changed receiver, as well as setting null for
+   * bindProcessToNetwork or setProcessDefaultNetwork to prevent future sockets from application
+   * being routed through Wifi.
+   */
+    private void maybeResetBindALL(){
+
+        Log.d(TAG, "maybeResetBindALL");
+
+        if ( API_VERSION >= 29 ) {
+            connectivityManager.bindProcessToNetwork(null);
+        
+            try {
+            // Same behavior as releaseNetworkRequest
+                connectivityManager.unregisterNetworkCallback(networkCallback); // Added in API 21
+            } catch (Exception e) {}
+        }
+
+        networkCallback = null;
+
+    }
+
+  
+
 
     
       /**
@@ -759,64 +765,5 @@ public class AndroidWifi extends CordovaPlugin {
             return false;
         }
     }
-
-    public void forceWifiUsage(boolean useWifi) {
-        boolean canWriteFlag = false;
-
-        if (useWifi) {
-            if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
-
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    canWriteFlag = true;
-                    // Only need ACTION_MANAGE_WRITE_SETTINGS on 6.0.0, regular permissions suffice on later versions
-                } else if (Build.VERSION.RELEASE.toString().equals("6.0.1")) {
-                    canWriteFlag = true;
-                    // Don't need ACTION_MANAGE_WRITE_SETTINGS on 6.0.1, if we can positively identify it treat like 7+
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    canWriteFlag = true;
-                    // // On M 6.0.0 (N+ or higher and 6.0.1 hit above), we need ACTION_MANAGE_WRITE_SETTINGS to forceWifi.
-                    // canWriteFlag = Settings.System.canWrite(this.context);
-                    // if (!canWriteFlag) {
-                    //     Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
-                    //     intent.setData(Uri.parse("package:" + this.context.getPackageName()));
-                    //     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-                    //     this.context.startActivity(intent);
-                    // }
-                }
-
-                if (((API_VERSION>= Build.VERSION_CODES.M) && canWriteFlag) || ((API_VERSION >= Build.VERSION_CODES.LOLLIPOP) && !(API_VERSION >= Build.VERSION_CODES.M))) {
-                    final ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
-                            //.getSystemService(Context.CONNECTIVITY_SERVICE);
-                    NetworkRequest networkRequest = new NetworkRequest.Builder().addTransportType(NetworkCapabilities.TRANSPORT_WIFI).build();
-                    manager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
-                        @Override
-                        public void onAvailable(Network network) {
-                            if (API_VERSION >= Build.VERSION_CODES.M) {
-                                manager.bindProcessToNetwork(network);
-                            } else {
-                                //This method was deprecated in API level 23
-                                ConnectivityManager.setProcessDefaultNetwork(network);
-                            }
-                            try {
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                            manager.unregisterNetworkCallback(this);
-                        }
-                    });
-                }
-            }
-        } else {
-            if (API_VERSION >= Build.VERSION_CODES.M) {
-                ConnectivityManager manager = (ConnectivityManager) this.connectivityManager;
-                        //.getSystemService(Context.CONNECTIVITY_SERVICE);
-                manager.bindProcessToNetwork(null);
-            } else if (API_VERSION >= Build.VERSION_CODES.LOLLIPOP) {
-                ConnectivityManager.setProcessDefaultNetwork(null);
-            }
-        }
-    }
-
 
 }
