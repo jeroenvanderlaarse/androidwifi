@@ -185,22 +185,22 @@ public class AndroidWifi extends CordovaPlugin {
     private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String password, String authType) {
         
         Log.d(TAG, "AndroidWifi: disconnectNetwork entered.");
+        
+        if (API_VERSION >= 29) {
 
-        int networkIdToDisconnect = get_connectionInfo_networkId(callbackContext);
+            maybeResetBindALL();
+            callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
+            return true;
+
+        }
+        else
+        {
+            int networkIdToDisconnect = get_connectionInfo_networkId(callbackContext);
 
         //int networkIdToDisconnect = ssidToNetworkId(ssidToDisconnect, authType);
 
-        if (networkIdToDisconnect > 0) {
+            if (networkIdToDisconnect > 0) {
 
-            if (API_VERSION >= 29) {
-
-                maybeResetBindALL();
-                callbackContext.success("Network " + ssidToDisconnect + " unregisterNetworkCallback!");
-                return true;
-
-            }
-            else
-            {
 
                 if (wifiManager.disableNetwork(networkIdToDisconnect)) {
     
@@ -477,11 +477,10 @@ public class AndroidWifi extends CordovaPlugin {
             try {
             // Same behavior as releaseNetworkRequest
                 connectivityManager.unregisterNetworkCallback(networkCallback); // Added in API 21
+                networkCallback = null;
             } catch (Exception e) {}
         }
-
-        networkCallback = null;
-
+        
     }
 
   
