@@ -201,7 +201,6 @@ public class AndroidWifi extends CordovaPlugin {
 
             if (networkIdToDisconnect > 0) {
 
-
                 if (wifiManager.disableNetwork(networkIdToDisconnect)) {
     
                     //maybeResetBindALL();
@@ -222,11 +221,11 @@ public class AndroidWifi extends CordovaPlugin {
                 }
     
                 return true;
-            } 
-
-        } else { //networkIdToDisconnect == -1
-            callbackContext.error("DISCONNECT_NET_ID_NOT_FOUND");
-            Log.d(TAG, "AndroidWifi: Network not found to disconnect.");
+            } else { //networkIdToDisconnect == -1
+                
+                callbackContext.error("DISCONNECT_NET_ID_NOT_FOUND");
+                Log.d(TAG, "AndroidWifi: Network not found to disconnect.");
+            }
         }
         return false;
     }
