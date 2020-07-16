@@ -277,7 +277,7 @@ public class AndroidWifi extends CordovaPlugin {
         // Only return SSID when actually connected to a network
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
-            callbackContext.error("CONNECTION_NOT_COMPLETED");
+            //callbackContext.error("CONNECTION_NOT_COMPLETED");
             return null;
         }
 
