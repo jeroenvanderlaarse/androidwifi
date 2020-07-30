@@ -33,7 +33,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-public enum SuppState {
+private enum SuppState {
     /**
          * This state indicates that client is not associated, but is likely to
          * start looking for an access point. This state is entered when a
@@ -713,18 +713,18 @@ public class AndroidWifi extends CordovaPlugin {
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
             switch (state){
-                case SuppState.DISCONNECTED:  callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");return -1;
-                case SuppState.INTERFACE_DISABLED:  callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");return -1;
-                case SuppState.INACTIVE:  callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");return -1;
-                case SuppState.SCANNING:  callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");return -1;
-                case SuppState.AUTHENTICATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");return -1;
-                case SuppState.ASSOCIATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");return -1;
-                case SuppState.ASSOCIATED:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");return -1;
-                case SuppState.FOUR_WAY_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");return -1;
-                case SuppState.GROUP_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");return -1;
-                case SuppState.DORMANT:  callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");return -1;
-                case SuppState.UNINITIALIZED:  callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");return -1;
-                case SuppState.INVALID:  callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");return -1;
+                case DISCONNECTED:  callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");return -1;
+                case INTERFACE_DISABLED:  callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");return -1;
+                case INACTIVE:  callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");return -1;
+                case SCANNING:  callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");return -1;
+                case AUTHENTICATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");return -1;
+                case ASSOCIATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");return -1;
+                case ASSOCIATED:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");return -1;
+                case FOUR_WAY_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");return -1;
+                case GROUP_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");return -1;
+                case DORMANT:  callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");return -1;
+                case UNINITIALIZED:  callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");return -1;
+                case INVALID:  callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");return -1;
             }
             callbackContext.error("CONNECTION_NOT_COMPLETED");
             return -1;
