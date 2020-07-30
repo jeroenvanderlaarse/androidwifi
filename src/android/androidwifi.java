@@ -33,7 +33,7 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
-typedef enum SuppState {
+public enum SuppState {
     /**
          * This state indicates that client is not associated, but is likely to
          * start looking for an access point. This state is entered when a
