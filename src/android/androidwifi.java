@@ -275,7 +275,33 @@ public class AndroidWifi extends CordovaPlugin {
         // Only return SSID when actually connected to a network
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
-            callbackContext.error("CONNECTION_NOT_COMPLETED");
+            if (state.equals(SupplicantState.DISCONNECTED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");}
+            else if (state.equals(SupplicantState.INTERFACE_DISABLED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");}
+            else if (state.equals(SupplicantState.INACTIVE)){
+               callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");}
+            else if (state.equals(SupplicantState.SCANNING)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");}
+            else if (state.equals(SupplicantState.AUTHENTICATING)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");}
+            else if (state.equals(SupplicantState.ASSOCIATING)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");}
+            else if (state.equals(SupplicantState.ASSOCIATED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");}
+            else if (state.equals(SupplicantState.FOUR_WAY_HANDSHAKE)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");}
+            else if (state.equals(SupplicantState.GROUP_HANDSHAKE)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");}
+            else if (state.equals(SupplicantState.DORMANT)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");}
+            else if (state.equals(SupplicantState.UNINITIALIZED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");}
+            else if (state.equals(SupplicantState.INVALID)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");}
+            else {
+                callbackContext.error("CONNECTION_NOT_COMPLETED|" + state);
+            }
             return null;
         }
 
@@ -593,33 +619,33 @@ public class AndroidWifi extends CordovaPlugin {
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
             if (state.equals(SupplicantState.DISCONNECTED)){
-            callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");return -1;}
-            else if (state.equals(SupplicantState.INTERFACE_DISABLED))
-            {callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");return -1;}
-            else if (state.equals(SupplicantState.INACTIVE))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");return -1;}
-            else if (state.equals(SupplicantState.SCANNING))
-             {callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");return -1;}
-            else if (state.equals(SupplicantState.AUTHENTICATING))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");return -1;}
-            else if (state.equals(SupplicantState.ASSOCIATING))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");return -1;}
-            else if (state.equals(SupplicantState.ASSOCIATED))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");return -1;}
-            else if (state.equals(SupplicantState.FOUR_WAY_HANDSHAKE))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");return -1;}
-            else if (state.equals(SupplicantState.GROUP_HANDSHAKE))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");return -1;}
-            else if (state.equals(SupplicantState.DORMANT))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");return -1;}
-            else if (state.equals(SupplicantState.UNINITIALIZED))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");return -1;}
-            else if (state.equals(SupplicantState.INVALID))
-              {callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");return -1;}
+                callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");}
+            else if (state.equals(SupplicantState.INTERFACE_DISABLED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");}
+            else if (state.equals(SupplicantState.INACTIVE)){
+               callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");}
+            else if (state.equals(SupplicantState.SCANNING)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");}
+            else if (state.equals(SupplicantState.AUTHENTICATING)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");}
+            else if (state.equals(SupplicantState.ASSOCIATING)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");}
+            else if (state.equals(SupplicantState.ASSOCIATED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");}
+            else if (state.equals(SupplicantState.FOUR_WAY_HANDSHAKE)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");}
+            else if (state.equals(SupplicantState.GROUP_HANDSHAKE)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");}
+            else if (state.equals(SupplicantState.DORMANT)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");}
+            else if (state.equals(SupplicantState.UNINITIALIZED)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");}
+            else if (state.equals(SupplicantState.INVALID)){
+                callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");}
             else {
                 callbackContext.error("CONNECTION_NOT_COMPLETED|" + state);
-                return -1;
             }
+            return -1;
         }
 
         Log.i(TAG, "get_connectionInfo_networkId networkId: " + info.getNetworkId());
