@@ -33,6 +33,124 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.List;
 
+typedef enum SuppState {
+    /**
+         * This state indicates that client is not associated, but is likely to
+         * start looking for an access point. This state is entered when a
+         * connection is lost.
+         */
+        DISCONNECTED,
+        /**
+         * Interface is disabled
+         * <p/>
+         * This state is entered if the network interface is disabled.
+         * wpa_supplicant refuses any new operations that would
+         * use the radio until the interface has been enabled.
+         */
+        INTERFACE_DISABLED,
+        /**
+         * Inactive state (wpa_supplicant disabled).
+         * <p/>
+         * This state is entered if there are no enabled networks in the
+         * configuration. wpa_supplicant is not trying to associate with a new
+         * network and external interaction (e.g., ctrl_iface call to add or
+         * enable a network) is needed to start association.
+         */
+        INACTIVE,
+        /**
+         * Scanning for a network.
+         * <p/>
+         * This state is entered when wpa_supplicant starts scanning for a
+         * network.
+         */
+        SCANNING,
+        /**
+         * Trying to authenticate with a BSS/SSID
+         * <p/>
+         * This state is entered when wpa_supplicant has found a suitable BSS
+         * to authenticate with and the driver is configured to try to
+         * authenticate with this BSS.
+         */
+        AUTHENTICATING,
+        /**
+         * Trying to associate with a BSS/SSID.
+         * <p/>
+         * This state is entered when wpa_supplicant has found a suitable BSS
+         * to associate with and the driver is configured to try to associate
+         * with this BSS in ap_scan=1 mode. When using ap_scan=2 mode, this
+         * state is entered when the driver is configured to try to associate
+         * with a network using the configured SSID and security policy.
+         */
+        ASSOCIATING,
+        /**
+         * Association completed.
+         * <p/>
+         * This state is entered when the driver reports that association has
+         * been successfully completed with an AP. If IEEE 802.1X is used
+         * (with or without WPA/WPA2), wpa_supplicant remains in this state
+         * until the IEEE 802.1X/EAPOL authentication has been completed.
+         */
+        ASSOCIATED,
+        /**
+         * WPA 4-Way Key Handshake in progress.
+         * <p/>
+         * This state is entered when WPA/WPA2 4-Way Handshake is started. In
+         * case of WPA-PSK, this happens when receiving the first EAPOL-Key
+         * frame after association. In case of WPA-EAP, this state is entered
+         * when the IEEE 802.1X/EAPOL authentication has been completed.
+         */
+        FOUR_WAY_HANDSHAKE,
+        /**
+         * WPA Group Key Handshake in progress.
+         * <p/>
+         * This state is entered when 4-Way Key Handshake has been completed
+         * (i.e., when the supplicant sends out message 4/4) and when Group
+         * Key rekeying is started by the AP (i.e., when supplicant receives
+         * message 1/2).
+         */
+        GROUP_HANDSHAKE,
+        /**
+         * All authentication completed.
+         * <p/>
+         * This state is entered when the full authentication process is
+         * completed. In case of WPA2, this happens when the 4-Way Handshake is
+         * successfully completed. With WPA, this state is entered after the
+         * Group Key Handshake; with IEEE 802.1X (non-WPA) connection is
+         * completed after dynamic keys are received (or if not used, after
+         * the EAP authentication has been completed). With static WEP keys and
+         * plaintext connections, this state is entered when an association
+         * has been completed.
+         * <p/>
+         * This state indicates that the supplicant has completed its
+         * processing for the association phase and that data connection is
+         * fully configured. Note, however, that there may not be any IP
+         * address associated with the connection yet. Typically, a DHCP
+         * request needs to be sent at this point to obtain an address.
+         */
+        COMPLETED,
+        /**
+         * An Android-added state that is reported when a client issues an
+         * explicit DISCONNECT command. In such a case, the supplicant is
+         * not only dissociated from the current access point (as for the
+         * DISCONNECTED state above), but it also does not attempt to connect
+         * to any access point until a RECONNECT or REASSOCIATE command
+         * is issued by the client.
+         */
+        DORMANT,
+        /**
+         * No connection to wpa_supplicant.
+         * <p/>
+         * This is an additional pseudo-state to handle the case where
+         * wpa_supplicant is not running and/or we have not been able
+         * to establish a connection to it.
+         */
+        UNINITIALIZED,
+        /**
+         * A pseudo-state that should normally never be seen.
+         */
+        INVALID;
+
+    }
 
 public class AndroidWifi extends CordovaPlugin {
 
@@ -578,6 +696,8 @@ public class AndroidWifi extends CordovaPlugin {
         }
     }
 
+
+
     private int get_connectionInfo_networkId(CallbackContext callbackContext) {
 
         Log.i(TAG, "get_connectionInfo_networkId enter");
@@ -593,18 +713,18 @@ public class AndroidWifi extends CordovaPlugin {
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
             switch (state){
-                case SupplicantState.DISCONNECTED:  callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");return -1;
-                case SupplicantState.INTERFACE_DISABLED:  callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");return -1;
-                case SupplicantState.INACTIVE:  callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");return -1;
-                case SupplicantState.SCANNING:  callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");return -1;
-                case SupplicantState.AUTHENTICATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");return -1;
-                case SupplicantState.ASSOCIATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");return -1;
-                case SupplicantState.ASSOCIATED:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");return -1;
-                case SupplicantState.FOUR_WAY_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");return -1;
-                case SupplicantState.GROUP_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");return -1;
-                case SupplicantState.DORMANT:  callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");return -1;
-                case SupplicantState.UNINITIALIZED:  callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");return -1;
-                case SupplicantState.INVALID:  callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");return -1;
+                case SuppState.DISCONNECTED:  callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");return -1;
+                case SuppState.INTERFACE_DISABLED:  callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");return -1;
+                case SuppState.INACTIVE:  callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");return -1;
+                case SuppState.SCANNING:  callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");return -1;
+                case SuppState.AUTHENTICATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");return -1;
+                case SuppState.ASSOCIATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");return -1;
+                case SuppState.ASSOCIATED:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");return -1;
+                case SuppState.FOUR_WAY_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");return -1;
+                case SuppState.GROUP_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");return -1;
+                case SuppState.DORMANT:  callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");return -1;
+                case SuppState.UNINITIALIZED:  callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");return -1;
+                case SuppState.INVALID:  callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");return -1;
             }
             callbackContext.error("CONNECTION_NOT_COMPLETED");
             return -1;
