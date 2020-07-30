@@ -592,6 +592,20 @@ public class AndroidWifi extends CordovaPlugin {
         // Only return SSID when actually connected to a network
         SupplicantState state = info.getSupplicantState();
         if (!state.equals(SupplicantState.COMPLETED)) {
+            switch (state){
+                case SupplicantState.DISCONNECTED:  callbackContext.error("CONNECTION_NOT_COMPLETED|DISCONNECTED");return -1;
+                case SupplicantState.INTERFACE_DISABLED:  callbackContext.error("CONNECTION_NOT_COMPLETED|INTERFACE_DISABLED");return -1;
+                case SupplicantState.INACTIVE:  callbackContext.error("CONNECTION_NOT_COMPLETED|INACTIVE");return -1;
+                case SupplicantState.SCANNING:  callbackContext.error("CONNECTION_NOT_COMPLETED|SCANNING");return -1;
+                case SupplicantState.AUTHENTICATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|AUTHENTICATING");return -1;
+                case SupplicantState.ASSOCIATING:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATING");return -1;
+                case SupplicantState.ASSOCIATED:  callbackContext.error("CONNECTION_NOT_COMPLETED|ASSOCIATED");return -1;
+                case SupplicantState.FOUR_WAY_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|FOUR_WAY_HANDSHAKE");return -1;
+                case SupplicantState.GROUP_HANDSHAKE:  callbackContext.error("CONNECTION_NOT_COMPLETED|GROUP_HANDSHAKE");return -1;
+                case SupplicantState.DORMANT:  callbackContext.error("CONNECTION_NOT_COMPLETED|DORMANT");return -1;
+                case SupplicantState.UNINITIALIZED:  callbackContext.error("CONNECTION_NOT_COMPLETED|UNINITIALIZED");return -1;
+                case SupplicantState.INVALID:  callbackContext.error("CONNECTION_NOT_COMPLETED|INVALID");return -1;
+            }
             callbackContext.error("CONNECTION_NOT_COMPLETED");
             return -1;
         }
