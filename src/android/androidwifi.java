@@ -214,7 +214,7 @@ public class AndroidWifi extends CordovaPlugin {
 
                 } else {
                     callbackContext.error("DISCONNECT_NET_DISABLE_ERROR");
-                    Log.d(TAG, "AndroidWifi: Unable to disable network!");
+                    Log.d(TAG, "AndroidWifi: Unable to disable network! networkIdToDisconnect=" + networkIdToDisconnect);
                     return false;
                 }
 
