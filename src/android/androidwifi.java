@@ -199,23 +199,55 @@ public class AndroidWifi extends CordovaPlugin {
 
             if (networkIdToDisconnect > 0) {
 
-                if (wifiManager.disableNetwork(networkIdToDisconnect)) {
+//             disableNetwork sometimes doesn't work for API_VERSION < 29
+//             workaround: disconnect instead (removeNetwork might nog work)
+
+                boolean disabled = wifiManager.disableNetwork(networkIdToDisconnect);
+                boolean disconnected = disabled;
+                boolean removed = false;
+
+                if (!disabled)
+                {
+                    removed = wifiManager.removeNetwork(networkIdToDisconnect);
+                    Log.d(TAG, "AndroidWifi: Unable to disableNetwork networkId=" + networkIdToDisconnect);
+
+                    disconnected = wifiManager.disconnect();
+
+                    if (!disconnected){
+                        Log.d(TAG, "AndroidWifi: Unable to disconnect() networkId=" + networkIdToDisconnect);
+                    }
+
+                }
+
+                if (disconnected || disabled) {
 
                     //maybeResetBindALL();
+                    if (!removed){
+                        removed = wifiManager.removeNetwork(networkIdToDisconnect);
+                    }
 
                     // We also remove the configuration from the device (use "disable" to keep config)
-                    if (wifiManager.removeNetwork(networkIdToDisconnect)) {
+                    if (disconnected && removed)
+                    {
                         callbackContext.success("Network " + ssidToDisconnect + " disconnected and removed!");
-                    } else {
+                    }
+                    else if (disconnected)
+                    {
+                        callbackContext.success("Network " + ssidToDisconnect + " disconnected!");
+                    }
+                    else
+                    {
                         callbackContext.error("DISCONNECT_NET_REMOVE_ERROR");
                         Log.d(TAG, "AndroidWifi: Unable to remove network!");
                         return false;
                     }
-
                 } else {
+
                     callbackContext.error("DISCONNECT_NET_DISABLE_ERROR");
                     Log.d(TAG, "AndroidWifi: Unable to disable network! networkIdToDisconnect=" + networkIdToDisconnect);
                     return false;
+
+
                 }
 
                 return true;
