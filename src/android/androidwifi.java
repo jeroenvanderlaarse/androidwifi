@@ -308,7 +308,7 @@ public class AndroidWifi extends CordovaPlugin {
 
         Log.d(TAG, "ssid=" + ssid);
 
-        if (ssid == null || ssid.isEmpty() || ssid == "0x" || ssid=="<unknown ssid>" ) {
+        if (ssid == null || ssid.isEmpty() || ssid == "0x" ) {
             callbackContext.error("WIFI_INFORMATION_EMPTY");
             return null;
         }
