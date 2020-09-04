@@ -446,16 +446,21 @@ public class AndroidWifi extends CordovaPlugin {
                         Log.i(TAG, "currentSSID: " + currentSSID);
                         Log.i(TAG, "ssid: " + ssid);
 
-                        if (currentSSID == "<unknown ssid>"){
-                            callbackContext.success("connected to " + currentSSID);
-                        }
-                        else {
-                            if (currentSSID.equals(ssid)) {
+                        if (currentSSID == null){
+                            callbackContext.error("UNABLE_TO_READ_WIFI_INFO");
+                        } else {
+                            if (currentSSID == "<unknown ssid>"){
                                 callbackContext.success("connected to " + currentSSID);
-                            } else {
-                                callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
+                            }
+                            else {
+                                if (currentSSID.equals(ssid)) {
+                                    callbackContext.success("connected to " + currentSSID);
+                                } else {
+                                    callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
+                                }
                             }
                         }
+
 
                         AndroidWifi.this.networkCallback = this;
                     }
