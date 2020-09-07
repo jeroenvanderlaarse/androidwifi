@@ -178,9 +178,9 @@ public class AndroidWifi extends CordovaPlugin {
     /**
      * This method disconnects a network.
      *
-     * @param callbackContext A Cordova callback context
-     * @param data JSON Array, with [0] being SSID to connect
-     * @return true if network disconnected, false if failed
+     * param callbackContext A Cordova callback context
+     * param data JSON Array, with [0] being SSID to connect
+     * return true if network disconnected, false if failed
      */
     private boolean disconnectNetwork(CallbackContext callbackContext, String ssidToDisconnect, String password, String authType) {
 
@@ -287,8 +287,8 @@ public class AndroidWifi extends CordovaPlugin {
     /**
      * This method retrieves the SSID for the currently connected network
      *
-     * @param callbackContext A Cordova callback context
-     * @return true if SSID found, false if not.
+     * param callbackContext A Cordova callback context
+     * return true if SSID found, false if not.
      */
     private String getConnectedSSID(CallbackContext callbackContext) {
 
@@ -473,13 +473,10 @@ public class AndroidWifi extends CordovaPlugin {
                 manager.requestNetwork(networkRequest, new ConnectivityManager.NetworkCallback() {
                     @Override
                     public void onAvailable(Network network) {
-                        Log.d(TAG, "forceWifiUsageQ() onAvailable");
-
                         manager.bindProcessToNetwork(network);
-                        String currentSSID = AndroidWifi.this.getWifiServiceInfoSSID();
+                        AndroidWifi.this.networkCallback = this;
 
-                        Log.i(TAG, "currentSSID: " + currentSSID);
-                        Log.i(TAG, "ssid: " + ssid);
+                        String currentSSID = AndroidWifi.this.getWifiServiceInfoSSID();
 
                         if (currentSSID == null){
                             callbackContext.error("UNABLE_TO_READ_WIFI_INFO");
@@ -491,12 +488,9 @@ public class AndroidWifi extends CordovaPlugin {
                                 callbackContext.error("CONNECTED_SSID_DOES_NOT_MATCH_REQUESTED_SSID");
                             }
                         }
-
-                        AndroidWifi.this.networkCallback = this;
                     }
                     @Override
                     public void onUnavailable() {
-                        Log.d(TAG, "forceWifiUsageQ() onUnavailable");
                         callbackContext.error("CONNECTION_FAILED");
                     }
                 });
@@ -530,10 +524,29 @@ public class AndroidWifi extends CordovaPlugin {
 
             Log.d(TAG, "API_VERSION=" + API_VERSION);
 
+            Log.d(TAG, "this.networkCallback=" + this.networkCallback);
+
             if (this.networkCallback != null) {
-                this.connectivityManager.unregisterNetworkCallback(this.networkCallback);
-                this.networkCallback = null;
+                try {
+                    this.connectivityManager.unregisterNetworkCallback(this.networkCallback);
+                    this.networkCallback = null;
+                }
+                catch (Exception e){
+                    Log.d(TAG, "unregister failed" + this.networkCallback);
+                }
             }
+            /*
+            Log.d(TAG, "networkCallback=" + networkCallback);
+            if (networkCallback != null) {
+                try {
+                    this.connectivityManager.unregisterNetworkCallback(networkCallback);
+                    networkCallback = null;
+                }
+                catch (Exception e){
+                    Log.d(TAG, "unregister failed" + networkCallback);
+                }
+            }
+            */
             this.connectivityManager.bindProcessToNetwork(null);
 
     /*
@@ -695,9 +708,9 @@ public class AndroidWifi extends CordovaPlugin {
      * This methods adds a network to the list of available WiFi networks. If the network already
      * exists, then it updates it.
      *
-     * @return true    if add successful, false if add fails
-     * @params callbackContext     A Cordova callback context.
-     * @params data                JSON Array with [0] == SSID, [1] == password
+     * return true    if add successful, false if add fails
+     * params callbackContext     A Cordova callback context.
+     * params data                JSON Array with [0] == SSID, [1] == password
      */
     private boolean add(CallbackContext callbackContext, String ssid, String password, String authType) {
        
