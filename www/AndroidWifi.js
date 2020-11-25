@@ -58,7 +58,8 @@ var AndroidWifi = {
      * @param {string} [algorithm=NONE]            WPA, WPA (for WPA2), WEP or NONE (NONE by default)
     * @returns {Promise<any>}
      */
-    disconnectNetwork: function (ssid, password, authType) {
+    "disconnectNetwork": function (ssid, password, authType) {
+        console.log("IN AndroidWifi::disconnectNetwork");
         return new Promise(function (resolve, reject) {
 
             if (!ssid) {
